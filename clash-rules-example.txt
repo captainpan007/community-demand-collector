@@ -1,0 +1,44 @@
+# Clash Verge 规则配置示例
+# 将以下规则添加到你的 Clash 配置文件的 rules 部分
+
+# ===== 开发工具专用规则 =====
+# 社交媒体 API（用于 community-demand-collector 项目）
+- DOMAIN-SUFFIX,reddit.com,美国节点
+- DOMAIN-SUFFIX,redd.it,美国节点
+- DOMAIN-SUFFIX,redditstatic.com,美国节点
+
+- DOMAIN-SUFFIX,twitter.com,美国节点
+- DOMAIN-SUFFIX,x.com,美国节点
+- DOMAIN-SUFFIX,twimg.com,美国节点
+- DOMAIN-SUFFIX,t.co,美国节点
+
+# GitHub（可选）
+- DOMAIN-SUFFIX,github.com,美国节点
+- DOMAIN-SUFFIX,githubusercontent.com,美国节点
+
+# 其他常用开发 API
+- DOMAIN-SUFFIX,api.openai.com,美国节点
+- DOMAIN-SUFFIX,anthropic.com,美国节点
+
+# ===== 说明 =====
+# 1. 将 "美国节点" 替换为你 Clash 中实际的美国节点名称
+# 2. 这些规则要放在配置文件 rules 部分的最前面
+# 3. 保存后重启 Clash Verge 生效
+
+# ===== 完整配置示例 =====
+# 如果你想创建一个策略组，使用这个结构：
+
+proxy-groups:
+  - name: "开发API"
+    type: select
+    proxies:
+      - 🇺🇸 美国节点1
+      - 🇺🇸 美国节点2
+      - DIRECT
+
+rules:
+  - DOMAIN-SUFFIX,reddit.com,开发API
+  - DOMAIN-SUFFIX,twitter.com,开发API
+  - DOMAIN-SUFFIX,x.com,开发API
+  # ... 其他规则
+  - MATCH,DIRECT

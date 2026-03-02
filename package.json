@@ -1,0 +1,32 @@
+{
+  "name": "community-demand-collector",
+  "version": "1.0.0",
+  "description": "CLI tool to collect user demands from various communities",
+  "main": "dist/index.js",
+  "bin": {
+    "demand-collector": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test": "ts-node src/test.ts",
+    "test:reddit": "ts-node src/test-reddit.ts",
+    "test:twitter": "ts-node src/test-twitter.ts",
+    "test:all": "ts-node src/test-all.ts"
+  },
+  "keywords": ["cli", "community", "demand", "collector"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.0",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0"
+  }
+}

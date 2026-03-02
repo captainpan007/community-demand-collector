@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "id": "1234567890123456789",
+      "text": "Just discovered a critical bug in our authentication system. Users can't log in after the latest update. This needs immediate attention! #bug #authentication",
+      "author_id": "111111111",
+      "created_at": "2026-02-28T10:30:00.000Z",
+      "public_metrics": {
+        "like_count": 342,
+        "reply_count": 78,
+        "retweet_count": 156,
+        "quote_count": 23
+      }
+    },
+    {
+      "id": "2345678901234567890",
+      "text": "Feature request: It would be amazing to have real-time collaboration features. Think Google Docs but for our platform. Who else wants this?",
+      "author_id": "222222222",
+      "created_at": "2026-02-27T14:20:00.000Z",
+      "public_metrics": {
+        "like_count": 289,
+        "reply_count": 65,
+        "retweet_count": 134,
+        "quote_count": 18
+      }
+    },
+    {
+      "id": "3456789012345678901",
+      "text": "The new UI is confusing. Can we get a dark mode option? My eyes are burning after working late nights. Please consider this! 🌙",
+      "author_id": "333333333",
+      "created_at": "2026-02-26T18:45:00.000Z",
+      "public_metrics": {
+        "like_count": 456,
+        "reply_count": 92,
+        "retweet_count": 201,
+        "quote_count": 34
+      }
+    },
+    {
+      "id": "4567890123456789012",
+      "text": "Performance issue: The app takes forever to load on mobile devices. Is anyone else experiencing this? We need optimization ASAP.",
+      "author_id": "444444444",
+      "created_at": "2026-02-25T09:15:00.000Z",
+      "public_metrics": {
+        "like_count": 198,
+        "reply_count": 45,
+        "retweet_count": 87,
+        "quote_count": 12
+      }
+    },
+    {
+      "id": "5678901234567890123",
+      "text": "Suggestion: Add export to PDF functionality. Would be super useful for generating reports. Many users have been asking for this feature.",
+      "author_id": "555555555",
+      "created_at": "2026-02-24T16:00:00.000Z",
+      "public_metrics": {
+        "like_count": 234,
+        "reply_count": 56,
+        "retweet_count": 98,
+        "quote_count": 15
+      }
+    }
+  ],
+  "meta": {
+    "result_count": 5
+  }
+}

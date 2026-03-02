@@ -1,0 +1,67 @@
+{
+  "kind": "Listing",
+  "data": {
+    "children": [
+      {
+        "data": {
+          "id": "abc123",
+          "title": "How to improve JavaScript performance in large applications?",
+          "selftext": "I'm working on a large JavaScript application and noticing performance issues. What are the best practices for optimization?",
+          "author": "dev_user_1",
+          "permalink": "/r/javascript/comments/abc123/how_to_improve_javascript_performance/",
+          "score": 245,
+          "num_comments": 67,
+          "created_utc": 1709251200
+        }
+      },
+      {
+        "data": {
+          "id": "def456",
+          "title": "Feature request: Better TypeScript integration",
+          "selftext": "It would be great to have better TypeScript support with automatic type inference and better error messages.",
+          "author": "typescript_fan",
+          "permalink": "/r/javascript/comments/def456/feature_request_better_typescript/",
+          "score": 189,
+          "num_comments": 45,
+          "created_utc": 1709164800
+        }
+      },
+      {
+        "data": {
+          "id": "ghi789",
+          "title": "Bug: Memory leak in React components",
+          "selftext": "I've noticed memory leaks when using certain React hooks. Has anyone else experienced this?",
+          "author": "react_developer",
+          "permalink": "/r/javascript/comments/ghi789/bug_memory_leak_in_react/",
+          "score": 312,
+          "num_comments": 89,
+          "created_utc": 1709078400
+        }
+      },
+      {
+        "data": {
+          "id": "jkl012",
+          "title": "Suggestion: Add dark mode to documentation",
+          "selftext": "The documentation is great but reading in dark mode would be much easier on the eyes.",
+          "author": "night_coder",
+          "permalink": "/r/javascript/comments/jkl012/suggestion_add_dark_mode/",
+          "score": 156,
+          "num_comments": 34,
+          "created_utc": 1708992000
+        }
+      },
+      {
+        "data": {
+          "id": "mno345",
+          "title": "Request: Better error handling in async functions",
+          "selftext": "Error handling in async/await could be improved. Current patterns are verbose and error-prone.",
+          "author": "async_master",
+          "permalink": "/r/javascript/comments/mno345/request_better_error_handling/",
+          "score": 201,
+          "num_comments": 52,
+          "created_utc": 1708905600
+        }
+      }
+    ]
+  }
+}
