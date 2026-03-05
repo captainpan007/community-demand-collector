@@ -15,6 +15,8 @@ export async function getCurrentUser() {
 }
 
 export function canRunCollect(user: { subscriptionStatus: string | null; monthlyQuotaUsed: number }) {
+  const isPro = true; // TODO: 上线前删除此行
+  if (isPro) return true;
   if (user.subscriptionStatus === 'active') return true;
   return user.monthlyQuotaUsed < 5;
 }
