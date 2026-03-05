@@ -1,0 +1,1 @@
+{"version":3,"file":"interface.d.ts","sourceRoot":"","sources":["../../src/translators/interface.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,IAAI,EAAE,MAAM,UAAU,CAAC;AAEhC,MAAM,WAAW,UAAU;IACvB;;OAEG;IACH,SAAS,CAAC,KAAK,EAAE,IAAI,EAAE,GAAG,OAAO,CAAC,IAAI,EAAE,CAAC,CAAC;CAC7C;AAED,MAAM,WAAW,gBAAgB;IAC7B,oBAAoB;IACpB,IAAI,CAAC,EAAE,OAAO,CAAC;CAClB"}

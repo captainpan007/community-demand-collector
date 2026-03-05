@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400..800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Syne", system-ui, sans-serif;
+}
+
+:root {
+  --background: #0F1B2D;
+  --foreground: #FFFFFF;
+  --accent: #00C2FF;
+  --accent-muted: rgba(0, 194, 255, 0.15);
+  --card-border: rgba(0, 194, 255, 0.2);
+  --card-glow: rgba(0, 194, 255, 0.3);
+  --muted: rgba(255, 255, 255, 0.6);
+  --muted-foreground: rgba(255, 255, 255, 0.5);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Syne', system-ui, sans-serif;
+}
+
+/* Card glow border */
+.card-glow {
+  border: 1px solid var(--card-border);
+  box-shadow: 0 0 20px var(--card-glow);
+}
+
+/* Button hover gradient */
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent) 0%, #0099cc 100%);
+  transition: all 0.2s ease;
+}
+.btn-accent:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33d1ff 0%, var(--accent) 100%);
+  box-shadow: 0 0 20px rgba(0, 194, 255, 0.4);
+}

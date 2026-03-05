@@ -26,7 +26,7 @@ export class BatchMarkdownReporter {
     lines.push(`|-------|-------|`);
     lines.push(`| Keywords | ${keywords.map(k => `\`${k}\``).join(', ')} |`);
     lines.push(`| Platform | ${source} |`);
-    lines.push(`| Subreddits | ${subreddits.length ? subreddits.join(', ') : '(all)' } |`);
+    lines.push(`| Subreddits | ${subreddits.length ? subreddits.join(', ') : '(all)'} |`);
     lines.push(`| Limit per keyword | ${data.limit} |`);
     lines.push(`| Generated at | ${generatedAt.toISOString().replace('T', ' ').slice(0, 19)} UTC |`);
     lines.push('');
@@ -83,6 +83,25 @@ export class BatchMarkdownReporter {
         lines.push(`| Date | ${post.createdAt.toISOString().slice(0, 10)} |`);
         lines.push(`| Link | [View post](${post.url}) |`);
         lines.push('');
+
+        if (post.titleZh) {
+          lines.push(`**💡 中译标题：${post.titleZh}**`);
+          lines.push('');
+        }
+
+        if (post.summaryZh) {
+          lines.push(`> **深度摘要 (商务视角)**`);
+          post.summaryZh.split('\n').forEach(line => {
+            lines.push(`> ${line}`);
+          });
+          lines.push('');
+        } else if (post.content.trim()) {
+          const preview = post.content.replace(/\n+/g, ' ').trim().slice(0, 300);
+          lines.push(`**内容摘要：**`);
+          lines.push('');
+          lines.push(`> ${preview}${post.content.length > 300 ? '…' : ''}`);
+          lines.push('');
+        }
       });
 
       lines.push('---');

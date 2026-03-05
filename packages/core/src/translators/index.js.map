@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../src/translators/index.ts"],"names":[],"mappings":";;;AAQA,4CAKC;AAZD,iCAAwC;AACxC,+BAAsC;AAGtC,+BAAwC;AAA/B,sGAAA,cAAc,OAAA;AACvB,6BAAsC;AAA7B,oGAAA,aAAa,OAAA;AAEtB,SAAgB,gBAAgB,CAAC,MAAwB;IACrD,IAAI,MAAM,CAAC,IAAI,EAAE,CAAC;QACd,OAAO,IAAI,qBAAc,EAAE,CAAC;IAChC,CAAC;IACD,OAAO,IAAI,mBAAa,EAAE,CAAC;AAC/B,CAAC"}

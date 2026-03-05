@@ -12,7 +12,12 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@demand-collector/core": ["packages/core/src/index"],
+      "@demand-collector/core/*": ["packages/core/src/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/test.ts", "src/test-reddit.ts", "src/test-twitter.ts", "src/test-all.ts"]

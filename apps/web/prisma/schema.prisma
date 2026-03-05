@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        String    @id @default(cuid())
+  clerkId                   String    @unique
+  email                     String?
+  lemonSqueezyCustomerId    String?
+  subscriptionStatus        String?   // active | cancelled | past_due | free
+  monthlyQuotaUsed          Int       @default(0)
+  quotaResetAt              DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  reports                   Report[]
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  keyword   String
+  source    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reports   Report[]
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title      String
+  reportData String?  // JSON string from core
+  charts     String?  // JSON array of chart URLs
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+}

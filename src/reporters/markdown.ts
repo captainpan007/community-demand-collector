@@ -16,7 +16,9 @@ export class MarkdownReporter {
   }
 
   private build(data: ReportData): string {
-    const { config, analysis, generatedAt } = data;
+    const { config, analysis, generatedAt } = data as ReportData & {
+      charts?: { wordCloudUrl?: string; trendUrl?: string };
+    };
     const lines: string[] = [];
 
     // ── 封面 ──────────────────────────────────────────────────────────
@@ -29,6 +31,20 @@ export class MarkdownReporter {
     lines.push(`| 采集帖子数 | ${analysis.totalPosts} |`);
     lines.push(`| 生成时间 | ${generatedAt.toISOString().replace('T', ' ').slice(0, 19)} UTC |`);
     lines.push('');
+
+    // ── 可视化 ────────────────────────────────────────────────────────
+    if ((data as any).charts?.wordCloudUrl || (data as any).charts?.trendUrl) {
+      lines.push('## 可视化图表');
+      lines.push('');
+      if ((data as any).charts?.wordCloudUrl) {
+        lines.push(`![Keyword Cloud](${(data as any).charts.wordCloudUrl})`);
+        lines.push('');
+      }
+      if ((data as any).charts?.trendUrl) {
+        lines.push(`![Trend](${(data as any).charts.trendUrl})`);
+        lines.push('');
+      }
+    }
 
     // ── 执行摘要 ──────────────────────────────────────────────────────
     lines.push(`## 执行摘要`);
@@ -68,7 +84,20 @@ export class MarkdownReporter {
       lines.push(`| 链接 | [查看原帖](${post.url}) |`);
       lines.push('');
 
-      if (post.content.trim()) {
+      lines.push('');
+
+      if (post.titleZh) {
+        lines.push(`**💡 中译标题：${post.titleZh}**`);
+        lines.push('');
+      }
+
+      if (post.summaryZh) {
+        lines.push(`> **深度摘要 (商务视角)**`);
+        post.summaryZh.split('\n').forEach(line => {
+          lines.push(`> ${line}`);
+        });
+        lines.push('');
+      } else if (post.content.trim()) {
         const preview = post.content.replace(/\n+/g, ' ').trim().slice(0, 300);
         lines.push(`**内容摘要：**`);
         lines.push('');
@@ -100,3 +129,4 @@ export class MarkdownReporter {
     return lines.join('\n');
   }
 }
+

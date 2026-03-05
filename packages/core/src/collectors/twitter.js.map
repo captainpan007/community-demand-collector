@@ -1,0 +1,1 @@
+{"version":3,"file":"twitter.js","sourceRoot":"","sources":["../../src/collectors/twitter.ts"],"names":[],"mappings":";;;AAAA,iCAAuC;AAGvC;;;GAGG;AACH,MAAa,gBAAiB,SAAQ,oBAAa;IAAnD;;QACW,aAAQ,GAAa,SAAS,CAAC;IAS1C,CAAC;IAPW,KAAK,CAAC,QAAQ;QACtB,MAAM,IAAI,KAAK,CAAC,uCAAuC,CAAC,CAAC;IAC3D,CAAC;IAES,SAAS,CAAC,IAAa;QAC/B,MAAM,IAAI,KAAK,CAAC,uCAAuC,CAAC,CAAC;IAC3D,CAAC;CACF;AAVD,4CAUC"}

@@ -60,44 +60,66 @@ function cleanText(raw: string): string {
 
 export class KeywordAnalyzer {
   /**
-   * 统计词频，同时记录每个词出现在多少篇不同帖子中（文档频率）
-   *
-   * @param posts   帖子列表
-   * @param topN    返回前 N 个关键词
-   * @param minDf   最小文档频率：词必须出现在至少 minDf 篇帖子中才计入（默认 2）
+   * 关键词分析：支持 unigram + bigram，TF-IDF 加权
+   * @param posts 帖子列表
+   * @param topN 返回前 N 个
+   * @param minDf 最小文档频率
    */
   analyze(posts: Post[], topN = 30, minDf = 2): Map<string, number> {
-    // termFreq: 词 → 全局出现总次数
+    const N = posts.length;
     const termFreq = new Map<string, number>();
-    // docFreq: 词 → 出现在几篇帖子中
     const docFreq = new Map<string, number>();
 
     for (const post of posts) {
       const raw = `${post.title} ${post.content}`;
       const text = cleanText(raw).toLowerCase();
       const words = text.match(/\b[a-z]{3,}\b/g) ?? [];
-
-      // 本篇帖子中出现过的词（去重，用于计算文档频率）
       const seenInPost = new Set<string>();
 
       for (const word of words) {
         if (STOP_WORDS.has(word)) continue;
-
         termFreq.set(word, (termFreq.get(word) ?? 0) + 1);
-
         if (!seenInPost.has(word)) {
           seenInPost.add(word);
           docFreq.set(word, (docFreq.get(word) ?? 0) + 1);
         }
       }
+      for (let i = 0; i < words.length - 1; i++) {
+        const w1 = words[i], w2 = words[i + 1];
+        if (STOP_WORDS.has(w1) || STOP_WORDS.has(w2)) continue;
+        const bigram = `${w1}_${w2}`;
+        termFreq.set(bigram, (termFreq.get(bigram) ?? 0) + 1);
+        if (!seenInPost.has(bigram)) {
+          seenInPost.add(bigram);
+          docFreq.set(bigram, (docFreq.get(bigram) ?? 0) + 1);
+        }
+      }
     }
 
-    // 过滤掉文档频率不足 minDf 的词，再按全局词频降序排列
-    const filtered = [...termFreq.entries()]
-      .filter(([word]) => (docFreq.get(word) ?? 0) >= minDf)
+    const scored = [...termFreq.entries()]
+      .filter(([w]) => (docFreq.get(w) ?? 0) >= minDf)
+      .map(([w, tf]) => {
+        const df = docFreq.get(w) ?? 1;
+        const idf = Math.log((N + 1) / (df + 1)) + 1;
+        return [w, tf * idf] as [string, number];
+      })
       .sort((a, b) => b[1] - a[1])
       .slice(0, topN);
-
-    return new Map(filtered);
+    return new Map(scored);
   }
+
+  count(posts: Post[], topN = 30, minDf = 2): Map<string, number> {
+    return this.analyze(posts, topN, minDf);
+  }
+}
+
+/** @deprecated 使用 KeywordAnalyzer */
+export const KeywordCounter = KeywordAnalyzer;
+
+export function keywordsToObject(map: Map<string, number>): Record<string, number> {
+  const obj: Record<string, number> = {};
+  for (const [k, v] of map) {
+    obj[k] = v;
+  }
+  return obj;
 }

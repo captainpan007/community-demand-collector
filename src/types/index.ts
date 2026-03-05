@@ -23,6 +23,10 @@ export interface Post {
   platform: Platform;
   /** 平台原始数据，可选保留用于调试或扩展 */
   raw?: Record<string, unknown>;
+  /** 中文翻译标题 */
+  titleZh?: string;
+  /** 深度摘要(中文) */
+  summaryZh?: string;
 }
 
 // ── 分析结果 ──────────────────────────────────────────────────────────
@@ -55,6 +59,18 @@ export interface BatchReportData {
   limit: number;
   results: BatchKeywordResult[];
   generatedAt: Date;
+}
+
+// ── 可持久化的报告数据（JSON 序列化用）────────────────────────────────
+export interface StoredReportData {
+  config: CollectorConfig;
+  analysis: {
+    totalPosts: number;
+    keywords: [string, number][];
+    topDemands: Post[];
+    summary: string;
+  };
+  generatedAt: string;
 }
 
 // ── 采集器错误类型 ────────────────────────────────────────────────────

@@ -1,0 +1,20 @@
+import { loadConfig, getConfig, AppConfig } from './config';
+import { CollectorConfig, AnalysisResult, ReportData, BatchReportData, BatchKeywordResult, StoredReportData, Post, Platform } from './types';
+import { MarkdownReporter } from './reporters/markdown';
+import { BatchMarkdownReporter } from './reporters/batch-markdown';
+import { CsvReporter } from './reporters/csv';
+import { createTranslator } from './translators';
+import { saveReportData, loadReportData, loadHistoryReports as loadHistoryReportsSync, saveHistoryReport } from './storage';
+export declare function runCollect(override?: Partial<CollectorConfig>): Promise<ReportData>;
+export declare function runBatch(keywords: string[], override?: Partial<CollectorConfig>): Promise<BatchReportData>;
+export declare function runReport(inputJsonPath: string, outputPath?: string, format?: 'md' | 'csv'): Promise<ReportData>;
+export declare function startScheduler(override?: Partial<AppConfig>): void;
+export declare function stopScheduler(): Promise<void>;
+export declare function buildWordCloudChart(keywords: Map<string, number> | Record<string, number>, config?: AppConfig): Promise<string | null>;
+export declare function buildTrendChart(historyReports: StoredReportData[], config?: AppConfig): Promise<string | null>;
+export declare function loadHistoryReports(historyDir: string): Promise<StoredReportData[]>;
+export { loadConfig, getConfig };
+export type { AppConfig, CollectorConfig, AnalysisResult, ReportData, BatchReportData, BatchKeywordResult, StoredReportData, Post, Platform, };
+export { saveReportData, loadReportData, loadHistoryReportsSync, saveHistoryReport, };
+export { MarkdownReporter, CsvReporter, BatchMarkdownReporter, createTranslator, };
+//# sourceMappingURL=index.d.ts.map

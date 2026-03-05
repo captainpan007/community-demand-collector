@@ -1,0 +1,1 @@
+{"version":3,"file":"demand-ranker.d.ts","sourceRoot":"","sources":["../../src/analyzers/demand-ranker.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,IAAI,EAAE,MAAM,UAAU,CAAC;AAEhC,qBAAa,YAAY;IACvB,8BAA8B;IAC9B,OAAO,CAAC,QAAQ,CAAC,KAAK,CAAQ;IAE9B,IAAI,CAAC,KAAK,EAAE,IAAI,EAAE,EAAE,KAAK,SAAK,GAAG,IAAI,EAAE;IAMvC,eAAe,CAAC,IAAI,EAAE,IAAI,GAAG,MAAM;CAKpC"}

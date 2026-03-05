@@ -1,11 +1,22 @@
 import { Command } from 'commander';
 import * as path from 'path';
-import { RedditCollector } from './collectors/reddit';
-import { KeywordAnalyzer } from './analyzers/keyword-counter';
-import { DemandRanker } from './analyzers/demand-ranker';
-import { MarkdownReporter } from './reporters/markdown';
-import { BatchMarkdownReporter } from './reporters/batch-markdown';
-import { CollectorConfig, AnalysisResult, ReportData, BatchKeywordResult, BatchReportData } from './types';
+import {
+  runCollect,
+  runBatch,
+  runReport,
+  startScheduler,
+  stopScheduler,
+  saveReportData,
+  loadHistoryReportsSync,
+  MarkdownReporter,
+  CsvReporter,
+  BatchMarkdownReporter,
+  loadConfig,
+  type CollectorConfig,
+  type AppConfig,
+  buildWordCloudChart,
+  buildTrendChart,
+} from '@demand-collector/core';
 
 const program = new Command();
 
@@ -18,73 +29,90 @@ program
 program
   .command('collect')
   .description('Collect user demand posts from a community platform')
-  .requiredOption('-k, --keyword <keyword>', 'Search keyword (e.g. "feature request")')
-  .option('-s, --source <source>', 'Source platform: reddit', 'reddit')
-  .option('-l, --limit <number>', 'Max number of posts to collect', '50')
-  .option('-r, --subreddits <list>', 'Comma-separated subreddits to search within (e.g. "AI_Agents,LocalLLaMA")')
+  .option('-k, --keyword <keyword>', 'Search keyword (e.g. "feature request")')
+  .option('-s, --source <source>', 'Source: reddit | hackernews | trustpilot')
+  .option('-l, --limit <number>', 'Max number of posts to collect')
+  .option('-r, --subreddits <list>', 'Comma-separated subreddits (reddit only)')
+  .option('-t, --translate', 'Enable LLM translation and summarization for top demands')
+  .option('-m, --mock', 'Use mock translator (only works if --translate is also set)')
   .option('-o, --output <path>', 'Output report file path', './reports/report.md')
+  .option('-f, --format <format>', 'Output format: md | csv', 'md')
+  .option('-j, --json <path>', 'Also save raw data as JSON (for report -i)')
   .action(async (options) => {
-    const config: CollectorConfig = {
-      keyword: options.keyword,
-      source: options.source,
-      limit: parseInt(options.limit, 10),
-      subreddits: options.subreddits
-        ? (options.subreddits as string).split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [],
+    const appConfig: AppConfig = loadConfig();
+    const keyword: string =
+      options.keyword || appConfig.defaults.keywords[0] || 'AI';
+    const source: string = options.source || appConfig.defaults.source;
+    const limit: number = options.limit
+      ? parseInt(options.limit, 10)
+      : appConfig.defaults.limit;
+    const subreddits: string[] = options.subreddits
+      ? (options.subreddits as string)
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const collectorConfig: CollectorConfig = {
+      keyword,
+      source,
+      limit,
+      subreddits,
+      translate: !!options.translate,
+      mock: !!options.mock,
+      output: options.output,
+      format: options.format,
+      json: options.json,
     };
 
     console.log('');
-    console.log(`Keyword    : "${config.keyword}"`);
-    console.log(`Source     : ${config.source}`);
-    console.log(`Limit      : ${config.limit}`);
-    console.log(`Subreddits : ${config.subreddits?.length ? config.subreddits.join(', ') : '(全站)'}`);
+    console.log(`Keyword    : "${collectorConfig.keyword}"`);
+    console.log(`Source     : ${collectorConfig.source}`);
+    console.log(`Limit      : ${collectorConfig.limit}`);
+    console.log(
+      `Subreddits : ${
+        collectorConfig.subreddits?.length
+          ? collectorConfig.subreddits.join(', ')
+          : '(全站)'
+      }`,
+    );
+    console.log(
+      `Translate  : ${
+        options.translate ? 'Yes' : 'No'
+      }${options.translate && options.mock ? ' (Mock)' : ''}`,
+    );
     console.log(`Output     : ${options.output}`);
     console.log('');
 
     try {
-      // 1. 采集
-      let collector;
-      if (config.source === 'reddit') {
-        collector = new RedditCollector(config);
+      const reportData = await runCollect(collectorConfig);
+
+      if (options.json) {
+        await saveReportData(reportData, path.resolve(options.json));
+      }
+
+      const history = loadHistoryReportsSync(appConfig.storage.historyDir);
+      const wordCloudUrl = buildWordCloudChart(
+        reportData.analysis.keywords,
+        appConfig,
+      );
+      const trendUrl = buildTrendChart(history, appConfig);
+      (reportData as any).charts = {
+        wordCloudUrl: wordCloudUrl || undefined,
+        trendUrl: trendUrl || undefined,
+      };
+
+      const outPath = path.resolve(options.output);
+      if (options.format === 'csv') {
+        new CsvReporter().generate(
+          reportData,
+          outPath.endsWith('.csv')
+            ? outPath
+            : outPath.replace(/\.md$/, '') + '.csv',
+        );
       } else {
-        console.error(`Unsupported source: "${config.source}". Currently supported: reddit`);
-        process.exit(1);
+        new MarkdownReporter().generate(reportData, outPath);
       }
-
-      const posts = await collector.collect();
-
-      if (posts.length === 0) {
-        console.log('No posts found. Try a different keyword or increase --limit.');
-        return;
-      }
-
-      // 2. 分析
-      console.log('Analyzing...');
-      const analyzer = new KeywordAnalyzer();
-      const ranker = new DemandRanker();
-
-      const keywords = analyzer.analyze(posts, 30);
-      const topDemands = ranker.rank(posts, Math.min(10, posts.length));
-
-      const analysis: AnalysisResult = {
-        totalPosts: posts.length,
-        keywords,
-        topDemands,
-        summary: `共采集 ${posts.length} 条帖子，来自 ${config.source} 平台，关键词「${config.keyword}」。热度最高的帖子得分为 ${ranker.engagementScore(topDemands[0])}。`,
-      };
-
-      // 3. 生成报告
-      console.log('Generating report...');
-      const reportData: ReportData = {
-        config,
-        analysis,
-        generatedAt: new Date(),
-      };
-
-      const reporter = new MarkdownReporter();
-      const outputPath = path.resolve(options.output);
-      reporter.generate(reportData, outputPath);
-
       console.log('Done!');
     } catch (err) {
       console.error('Error:', err instanceof Error ? err.message : err);
@@ -96,17 +124,31 @@ program
 program
   .command('batch')
   .description('Collect and compare demands for multiple keywords in one report')
-  .requiredOption('-K, --keywords <keywords>', 'Comma-separated keywords (e.g. "AI agent memory,LLM tools,AI automation")')
-  .option('-s, --source <source>', 'Source platform: reddit', 'reddit')
-  .option('-l, --limit <number>', 'Max posts per keyword', '50')
-  .option('-r, --subreddits <list>', 'Comma-separated subreddits (e.g. "AI_Agents,LocalLLaMA")')
+  .requiredOption(
+    '-K, --keywords <keywords>',
+    'Comma-separated keywords (e.g. "AI agent memory,LLM tools,AI automation")',
+  )
+  .option('-s, --source <source>', 'Source: reddit | hackernews | trustpilot')
+  .option('-l, --limit <number>', 'Max posts per keyword')
+  .option('-r, --subreddits <list>', 'Comma-separated subreddits (reddit only)')
+  .option('-t, --translate', 'Enable LLM translation and summarization for top demands')
+  .option('-m, --mock', 'Use mock translator (only works if --translate is also set)')
   .option('-o, --output <path>', 'Output report file path', './reports/batch-report.md')
   .action(async (options) => {
-    const keywords = (options.keywords as string).split(',').map((s: string) => s.trim()).filter(Boolean);
-    const source = options.source as string;
-    const limit = parseInt(options.limit, 10);
-    const subreddits = options.subreddits
-      ? (options.subreddits as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+    const appConfig: AppConfig = loadConfig();
+    const keywords = (options.keywords as string)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    const source: string = options.source || appConfig.defaults.source;
+    const limit: number = options.limit
+      ? parseInt(options.limit, 10)
+      : appConfig.defaults.limit;
+    const subreddits: string[] = options.subreddits
+      ? (options.subreddits as string)
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
       : [];
 
     if (keywords.length === 0) {
@@ -118,55 +160,35 @@ program
     console.log(`Keywords   : ${keywords.join(' | ')}`);
     console.log(`Source     : ${source}`);
     console.log(`Limit/kw   : ${limit}`);
-    console.log(`Subreddits : ${subreddits.length ? subreddits.join(', ') : '(all)'}`);
+    console.log(
+      `Subreddits : ${subreddits.length ? subreddits.join(', ') : '(all)'}`,
+    );
+    console.log(
+      `Translate  : ${
+        options.translate ? 'Yes' : 'No'
+      }${options.translate && options.mock ? ' (Mock)' : ''}`,
+    );
     console.log(`Output     : ${options.output}`);
     console.log('');
 
-    if (source !== 'reddit') {
-      console.error(`Unsupported source: "${source}". Currently supported: reddit`);
+    if (source !== 'reddit' && source !== 'hackernews') {
+      console.error(
+        `Unsupported source: "${source}". Use reddit or hackernews.`,
+      );
       process.exit(1);
     }
 
     try {
-      const analyzer = new KeywordAnalyzer();
-      const ranker = new DemandRanker();
-      const results: BatchKeywordResult[] = [];
-
-      for (const keyword of keywords) {
-        console.log(`\n── Collecting: "${keyword}" ──`);
-
-        const config: CollectorConfig = { keyword, source, limit, subreddits };
-        const collector = new RedditCollector(config);
-        const posts = await collector.collect();
-
-        console.log(`Analyzing "${keyword}"...`);
-        const keywordsMap = analyzer.analyze(posts, 30);
-        const topDemands = ranker.rank(posts, Math.min(10, posts.length));
-
-        const analysis: AnalysisResult = {
-          totalPosts: posts.length,
-          keywords: keywordsMap,
-          topDemands,
-          summary: `Collected ${posts.length} posts for "${keyword}" from ${source}.`,
-        };
-
-        results.push({ keyword, posts, analysis });
-      }
-
-      // 生成批量对比报告
-      console.log('\nGenerating batch comparison report...');
-      const reportData: BatchReportData = {
-        keywords,
+      const batchData = await runBatch(keywords, {
         source,
-        subreddits,
         limit,
-        results,
-        generatedAt: new Date(),
-      };
+        subreddits,
+      });
 
+      console.log('\nGenerating batch comparison report...');
       const reporter = new BatchMarkdownReporter();
       const outputPath = path.resolve(options.output);
-      reporter.generate(reportData, outputPath);
+      reporter.generate(batchData, outputPath);
 
       console.log('Done!');
     } catch (err) {
@@ -175,16 +197,41 @@ program
     }
   });
 
-// ── report 子命令（占位，待后续实现）────────────────────────────────
+// ── report 子命令 ────────────────────────────────────────────────────
 program
   .command('report')
-  .description('Generate a report from previously collected data')
-  .option('-i, --input <path>', 'Input data file path')
-  .option('-o, --output <path>', 'Output report file path', './reports/report.md')
-  .action((options) => {
-    console.log('[report] Not yet implemented.');
-    console.log(`  input  : ${options.input ?? '(none)'}`);
-    console.log(`  output : ${options.output}`);
+  .description('Generate report from JSON saved by collect --json')
+  .requiredOption('-i, --input <path>', 'Input JSON file (from collect -j)')
+  .option('-o, --output <path>', 'Output report path', './reports/report.md')
+  .option('-f, --format <format>', 'Format: md | csv', 'md')
+  .action(async (options) => {
+    try {
+      const inputPath = path.resolve(options.input);
+      const outPath = options.output ? path.resolve(options.output) : undefined;
+      await runReport(inputPath, outPath, options.format);
+      console.log('Done!');
+    } catch (err) {
+      console.error('Error:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
+  });
+
+// ── schedule 子命令 ─────────────────────────────────────────────────--
+program
+  .command('schedule')
+  .description('Run scheduled batch reports based on config.yaml')
+  .option('--stop', 'Stop running scheduler')
+  .action(async (options) => {
+    try {
+      if (options.stop) {
+        await stopScheduler();
+      } else {
+        await startScheduler();
+      }
+    } catch (err) {
+      console.error('Error:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
   });
 
 export { program };
