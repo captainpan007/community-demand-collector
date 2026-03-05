@@ -75,11 +75,18 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const total = reportData?.analysis?.totalPosts ?? posts.length;
 
   // 负面评论：score > 40 (对应 1-2 星)
-  const negCount = posts.filter((p) => p.score > 40).length;
+  const negPosts = posts.filter((p) => p.score > 40);
+  const negCount = negPosts.length;
   const negRatio = total > 0 ? negCount / total : 0;
-  const verdict = negRatio >= 0.4 ? '✅ 建议测品' : '⚠️ 谨慎入场';
-  const verdictColor = negRatio >= 0.4 ? 'text-green-400' : 'text-yellow-400';
-  const verdictBg = negRatio >= 0.4 ? 'bg-green-400/10 border-green-400/30' : 'bg-yellow-400/10 border-yellow-400/30';
+  const hasOpportunity = negRatio >= 0.3;
+  const verdict = hasOpportunity ? '🎯 存在市场机会' : '✅ 市场成熟，竞争激烈';
+  const verdictDesc = hasOpportunity
+    ? '买家痛点明显，现有竞品未能解决，有差异化切入空间'
+    : '现有产品用户满意度高，入场需要明确差异化优势';
+  const verdictColor = hasOpportunity ? 'text-green-400' : 'text-blue-400';
+  const verdictBg = hasOpportunity ? 'bg-green-400/10 border-green-400/30' : 'bg-blue-400/10 border-blue-400/30';
+  // 差评标题 tags
+  const negTitles = [...new Set(negPosts.map((p) => p.titleZh ?? p.title))].slice(0, 12);
 
   const topWords = extractTopWords(posts);
 
@@ -124,10 +131,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 <p className={`mt-1 text-2xl font-bold ${verdictColor}`}>{verdict}</p>
                 <p className="mt-2 text-sm text-white/70">
                   {total} 条评论中 <span className="font-semibold text-white">{negCount} 条</span>为差评
-                  （{Math.round(negRatio * 100)}%）
-                  {negRatio >= 0.4
-                    ? '，买家痛点集中，存在改良切入机会。'
-                    : '，差评占比较低，竞争格局相对成熟，需谨慎评估。'}
+                  （{Math.round(negRatio * 100)}%）—— {verdictDesc}
                 </p>
                 {topWords.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -142,7 +146,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                   </div>
                 )}
               </div>
-              <span className="text-4xl">{negRatio >= 0.4 ? '🎯' : '⚖️'}</span>
+              <span className="text-4xl">{hasOpportunity ? '🎯' : '⚖️'}</span>
             </div>
           </div>
         )}
@@ -209,6 +213,24 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <h2 className="font-display text-lg font-semibold text-white">高频词云</h2>
             <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
               <img src={charts[0]} alt="词云" className="w-full" />
+            </div>
+          </div>
+        )}
+
+        {/* 差评关键词 */}
+        {negTitles.length > 0 && (
+          <div className="mt-8">
+            <h2 className="font-display text-lg font-semibold text-white">差评关键词</h2>
+            <p className="mt-0.5 text-xs text-white/40">来自 score &gt; 40 的评论标题</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {negTitles.map((t, i) => (
+                <span
+                  key={i}
+                  className="rounded-full border border-red-400/20 bg-red-400/10 px-3 py-1 text-xs text-red-300"
+                >
+                  {t.length > 40 ? t.slice(0, 38) + '…' : t}
+                </span>
+              ))}
             </div>
           </div>
         )}
