@@ -1,5 +1,34 @@
 # 开发日志
 
+## 2026-03-06
+
+### 新增 TikTok Shop 采集器
+- ✅ `packages/core/src/collectors/tiktokshop.js`：Playwright 实现
+- 先访问 `tiktok.com/view/product/{keyword}`，无结果自动 fallback 到搜索页
+- 提取：title / content / author / rating / date，结构与 Amazon 一致
+- mock 数据 10 条，情感分布：差评 70% / 中性 10% / 好评 20%
+- Web 端默认 `mock:true`（TikTok 访问需代理）
+
+### 新增 Shopee 采集器
+- ✅ `packages/core/src/collectors/shopee.js`：优先调用 Shopee 公开 API
+- 流程：`/api/v4/search/search_items` 搜索商品 → `/api/v2/item/get_ratings` 拉差评（≤2星）
+- mock 数据 10 条，情感分布：差评 70% / 中性 10% / 好评 20%
+- Web 端默认 `mock:true`
+
+### 前端新增来源按钮
+- ✅ `app/new/page.tsx` 新增 TikTok Shop（TT）和 Shopee 东南亚（SP）按钮
+- source 类型联合扩展，grid 支持最多 7 列
+
+### 报告标题生成优化
+- ✅ `route.ts` 新增 `platformLabel` 映射表（amazon/tiktokshop/shopee/trustpilot/reddit/hackernews）
+- 标题格式统一为 `{keyword/productTitle} - {平台名称}`，去掉冗余日期和 source ID
+- 例：`手机充电器 - TikTok Shop`，`B08F7PTF53 - Amazon`
+
+### 免费额度上限调整
+- ✅ `lib/auth.ts`：免费用户月配额上限从 5 次改为 9999 次，方便测试阶段使用
+
+---
+
 ## 2026-03-05（续）
 
 ### Amazon Playwright 真实采集
