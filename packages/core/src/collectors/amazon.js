@@ -142,6 +142,14 @@ class AmazonCollector extends base_1.BaseCollector {
         if (this.config.mock) {
             return this.fetchMock();
         }
+        // ASIN 校验只在非 mock 模式执行
+        const _keyword = this.config.keyword.trim();
+        if (!isAsin(_keyword)) {
+            throw new types_1.CollectorError(
+                `Amazon collector requires a valid 10-char ASIN (e.g. B08F7PTF53), got: "${_keyword}"`,
+                this.platform
+            );
+        }
         try {
             return await this.fetchWithPlaywright();
         } catch (err) {
@@ -157,13 +165,8 @@ class AmazonCollector extends base_1.BaseCollector {
         const fs = require('fs');
         const keyword = this.config.keyword.trim();
         const limit = this.config.limit ?? 20;
-        const asin = isAsin(keyword) ? keyword.toUpperCase() : null;
-        if (!asin) {
-            throw new types_1.CollectorError(
-                `Amazon collector requires a valid 10-char ASIN (e.g. B08F7PTF53), got: "${keyword}"`,
-                this.platform
-            );
-        }
+        // ASIN 已由 fetchRaw 校验，此处直接使用
+        const asin = keyword.toUpperCase();
         // Auth state 保存路径（跨会话复用登录状态）
         const AUTH_STATE_PATH = path.join(os.homedir(), '.demand-collector', 'amazon-auth.json');
         const authDir = path.dirname(AUTH_STATE_PATH);
