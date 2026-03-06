@@ -52,7 +52,8 @@ class TrustpilotCollector extends base_1.BaseCollector {
                 userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             });
             const page = await context.newPage();
-            const url = `https://www.trustpilot.com/review/${encodeURIComponent(keyword)}`;
+            // Filter to 1-2 star reviews (negative) for demand analysis
+            const url = `https://www.trustpilot.com/review/${encodeURIComponent(keyword)}?stars=1&stars=2`;
             this.log(`Playwright → ${url}`);
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 

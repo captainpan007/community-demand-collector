@@ -17,17 +17,19 @@
 ✅ Amazon 真实采集：Playwright + 一次性登录流程，auth state 保存至 `~/.demand-collector/amazon-auth.json`
 ✅ Web 端支持 Amazon ASIN 采集（mock: false，serverExternalPackages 排除 playwright）
 ✅ 报告详情页完整重设计：选品结论 / 痛点 Top3 / 词云 / 差评关键词 / 折叠评论列表
+✅ Amazon URL 粘贴识别：输入框支持粘贴完整 Amazon URL，自动提取 ASIN 并显示绿色提示
+✅ 报告显示商品名称：Amazon 采集时抓取 productTitle，报告页优先显示商品名，fallback 显示 ASIN
+✅ Trustpilot 真实采集：Playwright 采集，过滤 1-2 星差评（?stars=1&stars=2），Web 端 mock:false
 
 ## 待完成
-- Trustpilot 采集器（代码已写，mock 模式待测试，真实网络待验证）
 - G2 采集器（未开始）
 
 ## 关键文件
 - `packages/core/src/collectors/amazon.js` - Amazon Playwright 采集器（含一次性登录流程）
-- `packages/core/src/collectors/trustpilot.js` - Trustpilot 采集器
+- `packages/core/src/collectors/trustpilot.js` - Trustpilot Playwright 采集器（1-2星过滤）
 - `packages/core/src/index.js` - runCollect 主流程，含 LLM 翻译逻辑
 - `packages/core/src/reporters/markdown.js` - CLI 报告生成（含综合结论，分母已修复）
-- `apps/web/app/api/collect/route.ts` - Web 采集 API（amazon 用 mock:false，其余 mock:true）
+- `apps/web/app/api/collect/route.ts` - Web 采集 API（amazon/trustpilot mock:false，其余 mock:true）
 - `apps/web/app/report/[id]/page.tsx` - 报告详情页（选品结论/痛点/词云/差评词）
 - `apps/web/app/api/subscribe/route.ts` - Lemon Squeezy Checkout
 - `apps/web/prisma/schema.prisma` - 数据库模型
