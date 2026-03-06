@@ -3,6 +3,11 @@ import { auth } from '@clerk/nextjs/server';
 import { getCurrentUser, canRunCollect } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { runCollect, buildWordCloudChart, buildTrendChart } from '@demand-collector/core';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
+
+const AMAZON_AUTH_PATH = join(homedir(), '.demand-collector', 'amazon-auth.json');
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -31,9 +36,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    // amazon 走 Playwright 真实采集（需服务器上存在 ~/.demand-collector/amazon-auth.json）
-    // 其他来源当前网络限制下仍用 mock；待代理/API 就绪后统一改为 false
-    const mock = source !== 'amazon';
+    // amazon: 有 auth 文件走真实采集，否则 fallback mock
+    const amazonAuthMissing = source === 'amazon' && !existsSync(AMAZON_AUTH_PATH);
+    const mock = source !== 'amazon' || amazonAuthMissing;
     const result = await runCollect({
       keyword,
       source: source as 'reddit' | 'hackernews' | 'trustpilot' | 'amazon',
@@ -41,6 +46,9 @@ export async function POST(req: Request) {
       limit,
       mock,
     });
+    if (amazonAuthMissing) {
+      (result as Record<string, unknown>).demoMode = true;
+    }
 
     const charts: string[] = [];
     try {

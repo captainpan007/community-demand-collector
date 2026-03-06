@@ -27,6 +27,7 @@ interface ReportData {
     topDemands: Post[];
     summary?: string;
   };
+  demoMode?: boolean;
 }
 
 function extractTopWords(posts: Post[]): string[] {
@@ -121,6 +122,13 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         <p className="mt-1 text-sm text-white/50">
           {new Date(report.createdAt).toLocaleString('zh-CN')} · 共采集 {total} 条评论
         </p>
+
+        {/* 演示数据提示 */}
+        {reportData?.demoMode && (
+          <div className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-300">
+            ⚠️ 当前为演示数据，真实数据需要服务器完成 Amazon 登录授权。
+          </div>
+        )}
 
         {/* 选品结论卡片 */}
         {posts.length > 0 && (
