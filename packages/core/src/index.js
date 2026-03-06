@@ -16,6 +16,8 @@ const reddit_1 = require("./collectors/reddit");
 const hackernews_1 = require("./collectors/hackernews");
 const trustpilot_1 = require("./collectors/trustpilot");
 const amazon_1 = require("./collectors/amazon");
+const tiktokshop_1 = require("./collectors/tiktokshop");
+const shopee_1 = require("./collectors/shopee");
 const keyword_counter_1 = require("./analyzers/keyword-counter");
 const demand_ranker_1 = require("./analyzers/demand-ranker");
 const markdown_1 = require("./reporters/markdown");
@@ -42,6 +44,12 @@ function buildCollector(config) {
     }
     if (config.source === 'amazon') {
         return new amazon_1.AmazonCollector(config);
+    }
+    if (config.source === 'tiktokshop') {
+        return new tiktokshop_1.TikTokShopCollector(config);
+    }
+    if (config.source === 'shopee') {
+        return new shopee_1.ShopeeCollector(config);
     }
     return new reddit_1.RedditCollector(config);
 }

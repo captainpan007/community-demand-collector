@@ -89,11 +89,13 @@ export async function POST(req: Request) {
     const mock =
       source === 'amazon' ? (amazonAuthMissing || !keywordIsAsin) :
       source === 'trustpilot' ? false :
+      source === 'tiktokshop' ? true :
+      source === 'shopee' ? true :
       true;
     console.log(`[collect] source=${source} mock=${mock} amazonAuthMissing=${amazonAuthMissing} authPath=${AMAZON_AUTH_PATH}`);
     const result = await runCollect({
       keyword,
-      source: source as 'reddit' | 'hackernews' | 'trustpilot' | 'amazon',
+      source: source as 'reddit' | 'hackernews' | 'trustpilot' | 'amazon' | 'tiktokshop' | 'shopee',
       subreddits: subreddits ?? [],
       limit,
       mock,
@@ -133,10 +135,13 @@ export async function POST(req: Request) {
       // ignore chart errors
     }
 
+    const isValidAsin2 = (s: string) => /^[A-Z0-9]{10}$/.test(s.trim().toUpperCase());
+    const safeKeyword = isValidAsin2(keyword) ? keyword.toUpperCase() : null;
+    const reportTitle = productTitle ?? safeKeyword ?? 'Amazon 商品';
     const report = await prisma.report.create({
       data: {
         userId: user.id,
-        title: `${productTitle ?? keyword} - ${source} - ${new Date().toLocaleDateString('zh-CN')}`,
+        title: `${reportTitle} - ${source} - ${new Date().toLocaleDateString('zh-CN')}`,
         reportData: JSON.stringify(result),
         charts: JSON.stringify(charts),
       },

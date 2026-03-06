@@ -14,11 +14,16 @@ const SOURCES = [
   { id: 'reddit' as const, label: 'Reddit', icon: 'R', enabled: true },
   { id: 'amazon' as const, label: 'Amazon', icon: 'AMZ', enabled: true },
   { id: 'trustpilot' as const, label: 'Trustpilot', icon: 'TP', enabled: true },
+  { id: 'tiktokshop' as const, label: 'TikTok Shop', icon: 'TT', enabled: true },
+  { id: 'shopee' as const, label: 'Shopee 东南亚', icon: 'SP', enabled: true },
   { id: 'g2' as const, label: 'G2', icon: 'G2', enabled: false },
 ] as const;
 
 function extractAsin(input: string): string | null {
-  const m = input.match(/\/dp\/([A-Z0-9]{10})/i);
+  // Handle bare ASIN
+  if (/^[A-Z0-9]{10}$/i.test(input.trim())) return input.trim().toUpperCase();
+  // Handle /dp/ASIN or /gp/product/ASIN or /product/ASIN
+  const m = input.match(/(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})/i);
   return m ? m[1].toUpperCase() : null;
 }
 
@@ -26,7 +31,7 @@ export default function NewPage() {
   const router = useRouter();
   const [keyword, setKeyword] = useState('');
   const [asinHint, setAsinHint] = useState<string | null>(null);
-  const [source, setSource] = useState<'reddit' | 'hackernews' | 'amazon' | 'trustpilot'>('hackernews');
+  const [source, setSource] = useState<'reddit' | 'hackernews' | 'amazon' | 'trustpilot' | 'tiktokshop' | 'shopee'>('hackernews');
   const [subreddits, setSubreddits] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +129,7 @@ export default function NewPage() {
               </div>
               <div>
                 <Label className="text-white/80">来源</Label>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                   {SOURCES.map((s) => (
                     <button
                       key={s.id}
