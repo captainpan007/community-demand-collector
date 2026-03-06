@@ -39,6 +39,7 @@ export async function POST(req: Request) {
     // amazon: 有 auth 文件走真实采集，否则 fallback mock
     const amazonAuthMissing = source === 'amazon' && !existsSync(AMAZON_AUTH_PATH);
     const mock = source !== 'amazon' || amazonAuthMissing;
+    console.log(`[collect] source=${source} mock=${mock} amazonAuthMissing=${amazonAuthMissing} authPath=${AMAZON_AUTH_PATH}`);
     const result = await runCollect({
       keyword,
       source: source as 'reddit' | 'hackernews' | 'trustpilot' | 'amazon',
@@ -75,7 +76,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ reportId: report.id });
   } catch (err) {
-    console.error('collect error', err);
+    console.error('[collect] ERROR:', err);
+    if (err instanceof Error && (err as NodeJS.ErrnoException & { cause?: unknown }).cause) {
+      console.error('[collect] CAUSE:', (err as NodeJS.ErrnoException & { cause?: unknown }).cause);
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : '采集失败' },
       { status: 500 }
