@@ -9,6 +9,50 @@ import { homedir } from 'os';
 
 const AMAZON_AUTH_PATH = join(homedir(), '.demand-collector', 'amazon-auth.json');
 
+async function generateAISuggestions(
+  keyword: string,
+  source: string,
+  topPosts: Array<{ title: string; titleZh?: string; content: string }>
+): Promise<string[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || topPosts.length === 0) return [];
+
+  const baseUrl = (process.env.OPENAI_BASE_URL ?? '').replace(/\/$/, '');
+  const apiUrl = process.env.OPENAI_API_URL ??
+    (baseUrl ? `${baseUrl}/chat/completions` : 'https://api.openai.com/v1/chat/completions');
+  const model = process.env.OPENAI_MODEL ?? 'moonshot-v1-8k';
+
+  const postsContext = topPosts.slice(0, 5).map((p, i) => {
+    const zh = p.titleZh ? `（${p.titleZh}）` : '';
+    return `${i + 1}. ${p.title}${zh}\n   ${p.content.slice(0, 200)}`;
+  }).join('\n');
+
+  const prompt = `你是资深出海电商产品顾问。以下是用户对产品"${keyword}"（平台：${source}）的真实评论痛点：
+
+${postsContext}
+
+请基于以上真实评论内容，生成3条具体的产品改进建议。要求：
+1. 建议必须针对这个具体产品的实际痛点，不要套用通用模板
+2. 每条建议包含具体改进方向和可落地的措施
+3. 输出纯 JSON 数组，无 markdown 包裹，格式：["建议1", "建议2", "建议3"]`;
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.7 }),
+    });
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const content = data.choices?.[0]?.message?.content ?? '[]';
+    const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed.slice(0, 3) : [];
+  } catch (err) {
+    console.warn('[collect] generateAISuggestions failed:', err);
+    return [];
+  }
+}
+
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) {
@@ -51,6 +95,19 @@ export async function POST(req: Request) {
     });
     if (amazonAuthMissing) {
       (result as Record<string, unknown>).demoMode = true;
+    }
+
+    // AI 改进建议：基于实际 topDemands 生成
+    try {
+      const topPosts = (result.analysis?.topDemands ?? [])
+        .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
+        .slice(0, 5) as Array<{ title: string; titleZh?: string; content: string }>;
+      const suggestions = await generateAISuggestions(keyword, source, topPosts);
+      if (suggestions.length > 0) {
+        (result as Record<string, unknown>).suggestions = suggestions;
+      }
+    } catch {
+      // ignore, report page will show nothing
     }
 
     const charts: string[] = [];

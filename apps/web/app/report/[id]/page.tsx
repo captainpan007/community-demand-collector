@@ -28,6 +28,7 @@ interface ReportData {
     summary?: string;
   };
   demoMode?: boolean;
+  suggestions?: string[];
 }
 
 function extractTopWords(posts: Post[]): string[] {
@@ -104,24 +105,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const neuPct = total > 0 ? Math.round((neuPosts.length / total) * 100) : 0;
   const negPct = total > 0 ? Math.round((negPosts.length / total) * 100) : 0;
 
-  // 改进建议（基于高频痛点关键词生成）
-  function generateSuggestions(topPosts: Post[]): string[] {
-    const text = topPosts.map((p) => `${p.titleZh ?? p.title} ${p.content}`).join(' ').toLowerCase();
-    const suggestions: string[] = [];
-    if (/hot|heat|overheat|temperature/.test(text)) suggestions.push('改进散热设计：在底部增加散热孔或使用导热材料，将工作温度控制在 45°C 以内，规避安全隐患');
-    if (/noise|sound|buzzing|hum/.test(text)) suggestions.push('降低线圈噪音：优化驱动频率与线圈匝数比，确保静音充电，满足卧室夜间使用场景');
-    if (/slow|speed|15w|watt|fast/.test(text)) suggestions.push('提升实际充电效率：支持主流快充协议（15W+），并在包装显眼位置列出兼容设备型号，避免误导');
-    if (/align|coil|placement|spot/.test(text)) suggestions.push('扩大充电感应区域：优化线圈尺寸与多线圈排列，实现 ±15mm 容错范围，告别精准摆放');
-    if (/light|led|bright|blind/.test(text)) suggestions.push('新增 LED 亮度调节：提供亮/暗/关三档选择，或感应环境光自动调节，避免夜间睡眠干扰');
-    if (/case|thick|mm|cover/.test(text)) suggestions.push('提升手机壳兼容性：优化磁场穿透能力，支持 6mm 以上手机壳正常充电，并在详情页明确标注');
-    if (/stop|disconnect|intermittent|random/.test(text)) suggestions.push('修复固件断充问题：完善充电状态检测逻辑，消除随机断连，提供 OTA 固件升级通道');
-    if (/adapter|plug|included|box/.test(text)) suggestions.push('优化包装内容说明：在标题和首图明确标注是否含充电头，避免消费者期望落差');
-    if (/wobble|stand|base|tip/.test(text)) suggestions.push('加固底座设计：增加配重或防滑垫，确保单手取放手机时底座稳定不移位');
-    if (suggestions.length < 3) suggestions.push('建立快速售后响应机制：48 小时内响应差评，提供免费换货，将差评转化为品牌口碑资产');
-    if (suggestions.length < 3) suggestions.push('加强出厂质检标准：对过热、断充、噪音问题建立量化验收指标，从源头减少不良品流出');
-    return suggestions.slice(0, 3);
-  }
-  const suggestions = generateSuggestions(top5);
+  // 改进建议：优先使用采集时 AI 生成的内容，无则不展示
+  const suggestions: string[] = reportData?.suggestions ?? [];
 
   const platformLabel: Record<string, string> = {
     amazon: 'Amazon',
@@ -276,7 +261,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         {suggestions.length > 0 && (
           <div className="mt-8">
             <h2 className="font-display text-lg font-semibold text-white">产品改进建议</h2>
-            <p className="mt-0.5 text-xs text-white/40">根据高频痛点自动生成</p>
+            <p className="mt-0.5 text-xs text-white/40">由 AI 基于真实评论痛点生成</p>
             <div className="mt-3 space-y-2">
               {suggestions.map((s, i) => (
                 <div key={i} className="flex gap-3 rounded-xl border border-[#00C2FF]/15 bg-[#00C2FF]/5 px-4 py-3">
