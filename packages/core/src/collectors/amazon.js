@@ -145,6 +145,7 @@ class AmazonCollector extends base_1.BaseCollector {
             return this.fetchMock();
         }
         // ASIN 校验只在非 mock 模式执行
+        if (this.config.mock) return this.fetchMock ? this.fetchMock() : { reviews: [], analysis: { keywords: new Map(), sentiments: [] } };
         const _keyword = this.config.keyword.trim();
         if (!isAsin(_keyword)) {
             throw new types_1.CollectorError(

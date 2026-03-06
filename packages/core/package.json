@@ -1,1 +1,1 @@
-{"name":"@demand-collector/core","version":"1.0.0","main":"dist/index.js","types":"dist/index.d.ts","scripts":{"build":"tsc -p tsconfig.json"}}
+{"name":"@demand-collector/core","version":"1.0.0","main":"src/index.js","types":"src/index.d.ts","scripts":{"build":"tsc -p tsconfig.json"}}
