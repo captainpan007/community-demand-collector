@@ -15,16 +15,19 @@ class ShopeeCollector extends base_1.BaseCollector {
         const now = Date.now();
         const day = 24 * 3600 * 1000;
         const allMock = [
+            // 差评 70% (7条)
             { id: "sp-mock-001", title: "Item arrived broken", text: "Packaging was very thin and item inside was cracked on arrival. Contacted seller but they said it is normal. Do not buy from this shop.", stars: 1, createdAt: new Date(now - 1 * day).toISOString(), author: "buyer_sg_001" },
             { id: "sp-mock-002", title: "Wrong item sent", text: "Ordered the blue variant but received red. Asked seller to exchange and they wanted me to pay for return shipping. Very bad service.", stars: 2, createdAt: new Date(now - 4 * day).toISOString(), author: "shopee_user_kl" },
             { id: "sp-mock-003", title: "Quality much worse than photos", text: "The product photos are heavily edited. In real life the material is thin and transparent. Looks nothing like the listing. Misleading seller.", stars: 1, createdAt: new Date(now - 7 * day).toISOString(), author: "honest_reviewer_my" },
             { id: "sp-mock-004", title: "Stopped working after 2 weeks", text: "Used it for only two weeks and it completely stopped working. Seller is no longer responding to messages. Wasted money.", stars: 1, createdAt: new Date(now - 11 * day).toISOString(), author: "ph_buyer_2024" },
             { id: "sp-mock-005", title: "Very slow shipping even with express", text: "Paid extra for express shipping but package took 3 weeks. Tracking showed no updates for 10 days. Shopee support could not help.", stars: 2, createdAt: new Date(now - 15 * day).toISOString(), author: "impatient_but_fair" },
             { id: "sp-mock-006", title: "Zipper broke on first use", text: "The zipper on the bag broke completely the first time I tried to open it. The stitching is also coming apart. Terrible build quality.", stars: 1, createdAt: new Date(now - 20 * day).toISOString(), author: "fashion_reviewer_id" },
-            { id: "sp-mock-007", title: "Strong plastic smell, possibly harmful", text: "Opened the box and the smell was unbearable. Had to leave it outside for a week. Still smells. Not safe to use near food.", stars: 1, createdAt: new Date(now - 26 * day).toISOString(), author: "health_first_sg" },
-            { id: "sp-mock-008", title: "Seller rating is fake", text: "Shop has 5-star rating but product is terrible. Clearly bought fake reviews. Real customer experience is completely different from what ratings show.", stars: 2, createdAt: new Date(now - 32 * day).toISOString(), author: "skeptical_shopper" },
-            { id: "sp-mock-009", title: "Size chart completely wrong", text: "Followed the size chart exactly and ordered M but received something that would fit a child. No standard sizing used at all by this seller.", stars: 1, createdAt: new Date(now - 39 * day).toISOString(), author: "return_queen_th" },
-            { id: "sp-mock-010", title: "Refund process is a nightmare", text: "Raised a return request two weeks ago and still no resolution. Shopee keeps closing my case automatically. Customer service is non-existent.", stars: 1, createdAt: new Date(now - 47 * day).toISOString(), author: "disappointed_vn_buyer" },
+            { id: "sp-mock-007", title: "Refund process is a nightmare", text: "Raised a return request two weeks ago and still no resolution. Shopee keeps closing my case automatically. Customer service is non-existent.", stars: 1, createdAt: new Date(now - 26 * day).toISOString(), author: "disappointed_vn_buyer" },
+            // 中性 10% (1条)
+            { id: "sp-mock-008", title: "OK for the price, nothing special", text: "Product works as basic function but the finish is rougher than the photos suggest. Delivery took 10 days which is acceptable. Not bad, not great.", stars: 3, createdAt: new Date(now - 33 * day).toISOString(), author: "neutral_sg_buyer" },
+            // 好评 20% (2条)
+            { id: "sp-mock-009", title: "Fast delivery, great quality", text: "Received in 3 days via Shopee Express. Product matches the photos exactly and feels solid. Seller also included a small gift. Will order again.", stars: 5, createdAt: new Date(now - 40 * day).toISOString(), author: "happy_customer_my" },
+            { id: "sp-mock-010", title: "Best purchase this month", text: "Excellent value for money. The quality is much better than I expected from this price range. Packaging was secure and no damage at all. Highly recommend.", stars: 5, createdAt: new Date(now - 48 * day).toISOString(), author: "satisfied_ph_buyer" },
         ];
         return allMock.slice(0, limit);
     }

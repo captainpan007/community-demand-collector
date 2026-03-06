@@ -136,8 +136,14 @@ export async function POST(req: Request) {
     }
 
     const isValidAsin2 = (s: string) => /^[A-Z0-9]{10}$/.test(s.trim().toUpperCase());
-    const safeKeyword = isValidAsin2(keyword) ? keyword.toUpperCase() : null;
-    const reportTitle = productTitle ?? safeKeyword ?? 'Amazon 商品';
+    const reportTitle =
+      source === 'amazon'
+        ? (productTitle ?? (isValidAsin2(keyword) ? keyword.toUpperCase() : null) ?? 'Amazon 商品')
+        : source === 'tiktokshop'
+        ? `${keyword} - TikTok Shop`
+        : source === 'shopee'
+        ? `${keyword} - Shopee`
+        : `${keyword} - ${source}`;
     const report = await prisma.report.create({
       data: {
         userId: user.id,
