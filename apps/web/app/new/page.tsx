@@ -17,13 +17,37 @@ const SOURCES = [
   { id: 'g2' as const, label: 'G2', icon: 'G2', enabled: false },
 ] as const;
 
+function extractAsin(input: string): string | null {
+  const m = input.match(/\/dp\/([A-Z0-9]{10})/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
 export default function NewPage() {
   const router = useRouter();
   const [keyword, setKeyword] = useState('');
+  const [asinHint, setAsinHint] = useState<string | null>(null);
   const [source, setSource] = useState<'reddit' | 'hackernews' | 'amazon' | 'trustpilot'>('hackernews');
   const [subreddits, setSubreddits] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handleKeywordChange(val: string) {
+    if (source === 'amazon') {
+      const asin = extractAsin(val);
+      if (asin) {
+        setKeyword(asin);
+        setAsinHint(`已识别 ASIN: ${asin}`);
+        return;
+      }
+    }
+    setKeyword(val);
+    setAsinHint(null);
+  }
+
+  function handleSourceChange(id: typeof source) {
+    setSource(id);
+    setAsinHint(null);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,17 +103,20 @@ export default function NewPage() {
                 <Input
                   id="keyword"
                   value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  placeholder={source === 'amazon' ? '例如：B08F7PTF53' : '例如：Anker 充电器 差评'}
+                  onChange={(e) => handleKeywordChange(e.target.value)}
+                  placeholder={source === 'amazon' ? '例如：B08F7PTF53 或粘贴 Amazon 商品链接' : '例如：Anker 充电器 差评'}
                   required
                   className="mt-2 border-white/20 bg-white/5 text-white placeholder:text-white/40 focus:border-[#00C2FF] focus:ring-[#00C2FF]/50"
                 />
                 <p className="mt-1.5 text-xs text-white/50">
                   {source === 'amazon'
-                    ? 'Amazon 请输入 ASIN（如 B08F7PTF53）；其他平台可输入中英文关键词'
+                    ? '支持直接输入 ASIN（如 B08F7PTF53）或粘贴完整 Amazon 商品链接'
                     : '支持中英文关键词，如：AI meeting tool、AI 会议工具'}
                 </p>
-                {source === 'amazon' && /[\u4e00-\u9fa5]/.test(keyword) && (
+                {asinHint && (
+                  <p className="mt-1 text-xs text-green-400/90">{asinHint}</p>
+                )}
+                {source === 'amazon' && !asinHint && /[\u4e00-\u9fa5]/.test(keyword) && (
                   <p className="mt-1 text-xs text-yellow-400/80">
                     ⚠ 检测到中文关键词：Amazon 评论为英文，建议改用英文关键词或直接输入 ASIN
                   </p>
@@ -102,7 +129,7 @@ export default function NewPage() {
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => s.enabled && setSource(s.id)}
+                      onClick={() => s.enabled && handleSourceChange(s.id)}
                       disabled={!s.enabled}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-lg border-2 py-4 transition',

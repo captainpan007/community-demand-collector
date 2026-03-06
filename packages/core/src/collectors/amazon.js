@@ -396,6 +396,15 @@ class AmazonCollector extends base_1.BaseCollector {
                     this.platform
                 );
             });
+            // Extract product title from review page header
+            const productTitle = await page.evaluate(() => {
+                const el = document.querySelector('#cm_cr-product_info [data-hook="product-link"], .product-title a, [data-hook="cr-summarization-attributes-btn"]');
+                if (el) return el.textContent?.trim() || null;
+                // fallback: first h1 or h2
+                const h1 = document.querySelector('h1');
+                return h1 ? h1.textContent?.trim() || null : null;
+            }).catch(() => null);
+            if (productTitle) this.log(`Product title: ${productTitle}`);
             const items = await page.evaluate(() => {
                 return Array.from(document.querySelectorAll('[data-hook="review"]')).map(el => ({
                     id: el.id || `amz-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -430,6 +439,7 @@ class AmazonCollector extends base_1.BaseCollector {
                     helpfulVotes,
                     verified: raw.verified,
                     asin,
+                    productTitle: productTitle || null,
                     url: `https://www.amazon.com/gp/customer-reviews/${raw.id}`,
                 };
             });
@@ -468,7 +478,7 @@ class AmazonCollector extends base_1.BaseCollector {
         const stars = raw.stars ?? 1;
         const score = (5 - stars) * 20;
         const id = String(raw.id ?? `amz-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-        return {
+        const post = {
             id,
             title: raw.title ?? "(no title)",
             titleZh: raw.titleZh,
@@ -480,6 +490,8 @@ class AmazonCollector extends base_1.BaseCollector {
             createdAt: raw.createdAt ? new Date(raw.createdAt) : new Date(),
             platform: this.platform,
         };
+        if (raw.productTitle) post.productTitle = raw.productTitle;
+        return post;
     }
 }
 exports.AmazonCollector = AmazonCollector;

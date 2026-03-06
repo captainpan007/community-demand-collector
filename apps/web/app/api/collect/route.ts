@@ -110,6 +110,15 @@ export async function POST(req: Request) {
       // ignore, report page will show nothing
     }
 
+    // Extract product title from Amazon reviews (stored per-post by collector)
+    const productTitle: string | null =
+      source === 'amazon'
+        ? ((result.analysis?.topDemands?.[0] as Record<string, unknown>)?.productTitle as string | null) ?? null
+        : null;
+    if (productTitle) {
+      (result as Record<string, unknown>).productTitle = productTitle;
+    }
+
     const charts: string[] = [];
     try {
       const keywords = result.analysis?.keywords ?? new Map<string, number>();
@@ -122,7 +131,7 @@ export async function POST(req: Request) {
     const report = await prisma.report.create({
       data: {
         userId: user.id,
-        title: `${keyword} - ${source} - ${new Date().toLocaleDateString('zh-CN')}`,
+        title: `${productTitle ?? keyword} - ${source} - ${new Date().toLocaleDateString('zh-CN')}`,
         reportData: JSON.stringify(result),
         charts: JSON.stringify(charts),
       },

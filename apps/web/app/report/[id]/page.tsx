@@ -29,6 +29,7 @@ interface ReportData {
   };
   demoMode?: boolean;
   suggestions?: string[];
+  productTitle?: string;
 }
 
 function extractTopWords(posts: Post[]): string[] {
@@ -125,7 +126,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         {/* 顶部信息 */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <h1 className="font-display text-2xl font-bold text-white">
-            {config?.keyword ?? report.title}
+            {reportData?.productTitle ?? config?.keyword ?? report.title}
           </h1>
           {config?.source && (
             <span className="rounded-full bg-[#00C2FF]/20 px-3 py-0.5 text-xs font-medium text-[#00C2FF]">
@@ -133,6 +134,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             </span>
           )}
         </div>
+        {reportData?.productTitle && config?.keyword && (
+          <p className="mt-0.5 text-xs text-white/40">ASIN: {config.keyword}</p>
+        )}
         <p className="mt-1 text-sm text-white/50">
           {new Date(report.createdAt).toLocaleString('zh-CN')} · 共采集 {total} 条评论
         </p>

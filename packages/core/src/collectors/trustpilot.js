@@ -40,51 +40,65 @@ class TrustpilotCollector extends base_1.BaseCollector {
         }
         const keyword = this.config.keyword.trim();
         const limit = this.config.limit ?? 20;
-        this.log(`Search Trustpilot for brand: ${keyword}`);
+        this.log(`Fetching Trustpilot reviews for: ${keyword} via Playwright`);
 
-        const searchUrl = `https://www.trustpilot.com/search?query=${encodeURIComponent(keyword)}`;
-        const searchRes = await axios_1.default.get(searchUrl, {
-            headers: { "User-Agent": UA },
-            timeout: 15000,
-        }).catch((err) => {
-            throw new types_1.CollectorError(`Trustpilot search failed: ${err.message}`, this.platform, err);
+        const { chromium } = require('playwright');
+        const browser = await chromium.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
         });
+        try {
+            const context = await browser.newContext({
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            });
+            const page = await context.newPage();
+            const url = `https://www.trustpilot.com/review/${encodeURIComponent(keyword)}`;
+            this.log(`Playwright → ${url}`);
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        let domain = null;
-        const searchScript = searchRes.data.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (searchScript) {
-            try {
-                const data = JSON.parse(searchScript[1]);
-                const businesses = data?.props?.pageProps?.businessUnits?.businesses ?? [];
-                if (businesses.length > 0 && businesses[0].identifyingName) {
-                    domain = businesses[0].identifyingName;
-                }
-            } catch (_) { }
-        }
-        if (!domain) {
-            const $ = cheerio_1.default.load(searchRes.data);
-            const firstLink = $('a[href^="/review/"]').first().attr("href");
-            if (!firstLink) {
-                throw new types_1.CollectorError(`No company found for "${keyword}"`, this.platform);
-            }
-            domain = firstLink.replace(/^\/review\//, "").split("?")[0];
-        }
-        if (!domain) {
-            throw new types_1.CollectorError(`Could not parse domain for "${keyword}"`, this.platform);
-        }
-        this.log(`Found domain: ${domain}`);
+            // Wait for review cards
+            await page.waitForSelector(
+                '[data-service-review-card-id], article[data-review-id], [class*="styles_reviewCard"]',
+                { timeout: 15000 }
+            ).catch(() => {
+                throw new types_1.CollectorError(
+                    `No reviews found for "${keyword}" on Trustpilot. The page may require JS rendering or the company slug is incorrect.`,
+                    this.platform
+                );
+            });
 
-        const reviewUrl = `https://www.trustpilot.com/review/${domain}?stars=1&stars=2`;
-        this.log(`GET ${reviewUrl}`);
-        const reviewRes = await axios_1.default.get(reviewUrl, {
-            headers: { "User-Agent": UA },
-            timeout: 15000,
-        }).catch((err) => {
-            throw new types_1.CollectorError(`Trustpilot review page failed: ${err.message}`, this.platform, err);
-        });
+            const items = await page.evaluate((lim) => {
+                const selectors = '[data-service-review-card-id], article[data-review-id], [class*="styles_reviewCard"]';
+                const cards = Array.from(document.querySelectorAll(selectors)).slice(0, lim);
+                return cards.map((el, idx) => {
+                    const id = el.getAttribute('data-service-review-card-id')
+                        || el.getAttribute('data-review-id')
+                        || `tp-${idx}-${Math.random().toString(36).slice(2)}`;
+                    // Title: heading-level text
+                    const titleEl = el.querySelector('h2, [class*="typography_heading"], [data-service-review-title-typography]');
+                    const title = titleEl?.textContent?.trim() || '(no title)';
+                    // Body
+                    const bodyEl = el.querySelector('p, [class*="typography_body"], [data-service-review-text-typography]');
+                    const content = bodyEl?.textContent?.trim() || '';
+                    // Stars: img alt like "5 stars" or data attribute
+                    const starImg = el.querySelector('img[alt*="star"], [class*="star-rating"] img');
+                    const starAlt = starImg?.getAttribute('alt') || '';
+                    const stars = parseInt(starAlt) || 1;
+                    // Date
+                    const timeEl = el.querySelector('time');
+                    const createdAt = timeEl?.getAttribute('datetime') || new Date().toISOString();
+                    // Author
+                    const authorEl = el.querySelector('[class*="consumerInformation"] span, [class*="consumer-information"] span, [class*="typography_display"]');
+                    const author = authorEl?.textContent?.trim() || 'unknown';
+                    return { id, title, content, stars, createdAt, author };
+                });
+            }, limit);
 
-        const rawItems = this.extractReviews(reviewRes.data, limit);
-        return rawItems;
+            this.log(`Playwright: parsed ${items.length} Trustpilot reviews`);
+            return items.map(item => ({ ...item, url: `https://www.trustpilot.com/review/${keyword}` }));
+        } finally {
+            await browser.close();
+        }
     }
     extractReviews(html, limit) {
         const items = [];
