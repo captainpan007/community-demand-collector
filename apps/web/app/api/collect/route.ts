@@ -136,18 +136,24 @@ export async function POST(req: Request) {
     }
 
     const isValidAsin2 = (s: string) => /^[A-Z0-9]{10}$/.test(s.trim().toUpperCase());
-    const reportTitle =
+    const platformLabel: Record<string, string> = {
+      amazon: 'Amazon',
+      tiktokshop: 'TikTok Shop',
+      shopee: 'Shopee',
+      trustpilot: 'Trustpilot',
+      reddit: 'Reddit',
+      hackernews: 'Hacker News',
+    };
+    const label = platformLabel[source] ?? source;
+    const baseTitle =
       source === 'amazon'
         ? (productTitle ?? (isValidAsin2(keyword) ? keyword.toUpperCase() : null) ?? 'Amazon 商品')
-        : source === 'tiktokshop'
-        ? `${keyword} - TikTok Shop`
-        : source === 'shopee'
-        ? `${keyword} - Shopee`
-        : `${keyword} - ${source}`;
+        : keyword;
+    const reportTitle = `${baseTitle} - ${label}`;
     const report = await prisma.report.create({
       data: {
         userId: user.id,
-        title: `${reportTitle} - ${source} - ${new Date().toLocaleDateString('zh-CN')}`,
+        title: reportTitle,
         reportData: JSON.stringify(result),
         charts: JSON.stringify(charts),
       },
