@@ -222,7 +222,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-medium text-white leading-snug">
-                          {post.titleZh ?? post.title}
+                          {post.title}
+                          {post.titleZh && (
+                            <span className="ml-1 text-white/60">（{post.titleZh}）</span>
+                          )}
                         </p>
                         <span className="shrink-0 rounded-full bg-red-400/15 px-2 py-0.5 text-xs font-semibold text-red-300">
                           {pct}% 关注

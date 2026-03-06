@@ -50,6 +50,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-001",
                 title: "Stopped charging after 2 weeks",
+                titleZh: "两周后停止充电",
                 text: `I bought this ${keyword} hoping it would last. After only 2 weeks of normal use it just stopped working completely. Also noticed it got very hot during that short time. Contacted seller, no response. Waste of money.`,
                 stars: 1,
                 helpfulVotes: 243,
@@ -61,6 +62,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-002",
                 title: "Way slower than advertised",
+                titleZh: "实际速度远低于宣传",
                 text: `The box says 15W fast charging but my phone only ever shows 7.5W max. Tried multiple cables and phones. The ${keyword} is misleading in its specs. On top of that it runs hot during charging, which makes me nervous. Not what I paid for.`,
                 stars: 2,
                 helpfulVotes: 189,
@@ -72,6 +74,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-003",
                 title: "Gets dangerously hot",
+                titleZh: "过热问题（存在安全隐患）",
                 text: `This ${keyword} heats up so much I'm afraid to leave it on overnight. My phone was almost too hot to touch after an hour. This is a safety issue and Amazon should remove it.`,
                 stars: 1,
                 helpfulVotes: 311,
@@ -83,6 +86,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-004",
                 title: "Coil alignment is terrible",
+                titleZh: "无线充电线圈对位困难",
                 text: `Have to place my phone in exactly the right spot or it won't charge. The alignment window on this ${keyword} is maybe 1cm wide. So frustrating to use in the dark or half asleep.`,
                 stars: 2,
                 helpfulVotes: 97,
@@ -94,6 +98,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-005",
                 title: "Makes annoying buzzing noise all night",
+                titleZh: "整夜发出烦人噪音",
                 text: `The ${keyword} emits a constant high-pitched buzzing sound when charging. Completely unusable on a bedside table. Returned immediately.`,
                 stars: 1,
                 helpfulVotes: 278,
@@ -105,6 +110,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-006",
                 title: "Indicator light is blinding at night",
+                titleZh: "指示灯夜间刺眼",
                 text: `Why does the ${keyword} need an LED so bright it lights up the whole room? There's no way to turn it off. Had to cover it with tape. Simple design oversight that ruins an otherwise decent product.`,
                 stars: 2,
                 helpfulVotes: 154,
@@ -116,6 +122,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-007",
                 title: "Doesn't work through phone case",
+                titleZh: "无法穿透手机壳充电",
                 text: `Product description says it works through cases up to 5mm but it fails with my 3mm leather case. The ${keyword} only charges if I remove my case completely, which defeats the purpose.`,
                 stars: 1,
                 helpfulVotes: 232,
@@ -127,6 +134,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-008",
                 title: "Charging stops randomly during the night",
+                titleZh: "夜间随机断充",
                 text: `The ${keyword} randomly disconnects and reconnects during charging, waking me up with the notification sound. Checked with two different phones - same issue. Poor firmware or hardware quality.`,
                 stars: 2,
                 helpfulVotes: 196,
@@ -138,6 +146,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-009",
                 title: "Plastic build feels cheap, broke on first drop",
+                titleZh: "做工廉价，一摔即碎",
                 text: `Dropped the ${keyword} from my nightstand (less than 3 feet) and the housing cracked open. The internal coil came loose. Build quality is terrible for the price. Expected something more durable.`,
                 stars: 1,
                 helpfulVotes: 167,
@@ -149,6 +158,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-010",
                 title: "Only works with Samsung, not iPhone - misleading listing",
+                titleZh: "仅支持三星快充，描述具有误导性",
                 text: `The listing says "universal compatibility" but the 15W fast charge only works for Samsung Galaxy. My iPhone 14 Pro only charges at 7.5W. This is buried in the fine print. The ${keyword} should be advertised honestly.`,
                 stars: 2,
                 helpfulVotes: 221,
@@ -160,6 +170,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-011",
                 title: "Stand wobbles on any surface - tipping hazard",
+                titleZh: "底座不稳，容易倾倒",
                 text: `The base of this ${keyword} is poorly weighted. It tips over constantly, especially when removing the phone. On my glass desk it slides around. Needs rubber feet or a heavier base. Cheap design.`,
                 stars: 2,
                 helpfulVotes: 112,
@@ -171,6 +182,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-012",
                 title: "Interferes with my car key fob",
+                titleZh: "干扰汽车钥匙信号",
                 text: `Since plugging in the ${keyword} near my entryway, my car key fob stopped working reliably within 2 meters. Unplugged it and the fob works fine again. EMF interference is a real issue with this product.`,
                 stars: 1,
                 helpfulVotes: 88,
@@ -182,6 +194,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-013",
                 title: "No power adapter included - deceptive",
+                titleZh: "未附赠充电头，涉嫌欺骗",
                 text: `The ${keyword} listing shows a power brick in every product photo. Nowhere does it say the adapter is not included. I opened the box to find just the pad and a cable. Had to buy a separate 18W adapter. Very deceptive.`,
                 stars: 1,
                 helpfulVotes: 344,
@@ -193,6 +206,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-014",
                 title: "Gets extremely hot after 30 minutes",
+                titleZh: "使用30分钟后严重过热",
                 text: `I set up the ${keyword} as my overnight charger but it gets alarmingly hot after half an hour. The bottom of my phone was 48°C according to an app. I'm now worried about long-term battery damage and fire risk.`,
                 stars: 1,
                 helpfulVotes: 199,
@@ -203,9 +217,10 @@ class AmazonCollector extends base_1.BaseCollector {
             },
             {
                 id: "amz-mock-015",
-                title: "Returned it - slower than wired charging",
-                text: `Charged my phone overnight with the ${keyword} and it was at 60% by morning starting from 25%. My old 20W wired charger does the same in 90 minutes. Wireless charging should be convenient, not slower than a wall adapter from 2018.`,
-                stars: 2,
+                title: "Acceptable performance but gets warm",
+                titleZh: "性能尚可但充电时偏热",
+                text: `The ${keyword} works consistently and charges my phone overnight without issues. Charging speed is slower than wired but acceptable for nightly use. My main concern is it gets noticeably warm during extended sessions — nothing alarming, but worth monitoring. Overall a decent product for the price.`,
+                stars: 3,
                 helpfulVotes: 143,
                 verified: true,
                 createdAt: new Date(now - 155 * day).toISOString(),
@@ -214,9 +229,10 @@ class AmazonCollector extends base_1.BaseCollector {
             },
             {
                 id: "amz-mock-016",
-                title: "App required but app doesn't work",
-                text: `The ${keyword} requires a companion app to change settings. The app crashes on both my Android 14 and my wife's iOS 17. Support told me to 'wait for an update'. Paid extra for smart features I can't access.`,
-                stars: 1,
+                title: "Mixed feelings — good design, mediocre speed",
+                titleZh: "设计不错，充电速度一般",
+                text: `The ${keyword} has a sleek design that fits my bedside setup nicely. Charging speed is just okay — not as fast as advertised. Customer support responded within 24 hours when I had questions. Not bad, not great. Three stars feels right.`,
+                stars: 3,
                 helpfulVotes: 76,
                 verified: true,
                 createdAt: new Date(now - 168 * day).toISOString(),
@@ -225,10 +241,11 @@ class AmazonCollector extends base_1.BaseCollector {
             },
             {
                 id: "amz-mock-017",
-                title: "Arrived with bent coil - damaged in shipping",
-                text: `My ${keyword} arrived with the internal coil visibly bent - you could feel it through the pad. Charging efficiency was terrible. Amazon's return process took 3 weeks and two phone calls. Not worth the hassle.`,
-                stars: 1,
-                helpfulVotes: 55,
+                title: "Great charger, works perfectly with iPhone 15",
+                titleZh: "优秀充电器，与 iPhone 15 完美兼容",
+                text: `Switched from a generic pad to this ${keyword} and what a difference. My iPhone 15 Pro charges to 80% in about 70 minutes overnight. No overheating, no noise. The soft matte finish feels premium. Dock on my desk looks clean. Minor wish: a dimmable LED option.`,
+                stars: 4,
+                helpfulVotes: 87,
                 verified: true,
                 createdAt: new Date(now - 180 * day).toISOString(),
                 author: "Raj S.",
@@ -236,11 +253,12 @@ class AmazonCollector extends base_1.BaseCollector {
             },
             {
                 id: "amz-mock-018",
-                title: "No auto-shutoff - ran all day with no phone on it",
-                text: `Left my ${keyword} plugged in without a phone on it and it was still drawing power and generating heat 12 hours later. There's no auto-shutoff feature. This is a basic safety and efficiency failure.`,
-                stars: 2,
-                helpfulVotes: 134,
-                verified: false,
+                title: "Finally a wireless charger that just works",
+                titleZh: "终于找到一款真正好用的无线充电器",
+                text: `I've tried four wireless chargers in the last two years. The ${keyword} is the first that delivers on every promise: genuinely fast (15W on my Galaxy S24 Ultra), whisper-quiet, and hasn't broken a sweat in 3 months of daily use. The alignment range is forgiving too. Highly recommend.`,
+                stars: 5,
+                helpfulVotes: 176,
+                verified: true,
                 createdAt: new Date(now - 195 * day).toISOString(),
                 author: "Tara M.",
                 asin: "B0MOCK018",
@@ -248,6 +266,7 @@ class AmazonCollector extends base_1.BaseCollector {
             {
                 id: "amz-mock-019",
                 title: "Works great! Fast and quiet",
+                titleZh: "充电快且安静，体验极佳",
                 text: `Honestly love this ${keyword}. Charges my Galaxy S24 to full in under 90 minutes and completely silent. The LED is a bit bright but I put it in a drawer anyway. Would buy again.`,
                 stars: 4,
                 helpfulVotes: 212,
@@ -258,10 +277,11 @@ class AmazonCollector extends base_1.BaseCollector {
             },
             {
                 id: "amz-mock-020",
-                title: "Decent value but overheating is concerning",
-                text: `The ${keyword} works as described most of the time. Charging speed is acceptable. My only real complaint is the heat — it gets noticeably warm even during short sessions. For the price it's acceptable, but I wouldn't recommend for overnight use.`,
-                stars: 3,
-                helpfulVotes: 98,
+                title: "Solid everyday charger, great value for price",
+                titleZh: "日常使用可靠，性价比高",
+                text: `Been using the ${keyword} daily for 4 months now. It charges reliably, stays reasonably cool, and the build quality feels solid. Charging speed is close to the advertised 15W on my Samsung. The LED can be bright at night but I got used to it. Really good value.`,
+                stars: 4,
+                helpfulVotes: 142,
                 verified: true,
                 createdAt: new Date(now - 225 * day).toISOString(),
                 author: "Nina B.",
@@ -448,6 +468,7 @@ class AmazonCollector extends base_1.BaseCollector {
         return {
             id,
             title: raw.title ?? "(no title)",
+            titleZh: raw.titleZh,
             content: raw.text ?? raw.content ?? "",
             author: raw.author ?? "unknown",
             url: raw.url ?? `https://www.amazon.com/product-reviews/${raw.asin ?? 'unknown'}`,

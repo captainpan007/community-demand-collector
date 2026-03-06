@@ -84,11 +84,11 @@ export default function NewPage() {
                   required
                   className="mt-2 border-white/20 bg-white/5 text-white placeholder:text-white/40 focus:border-[#00C2FF] focus:ring-[#00C2FF]/50"
                 />
-                {source === 'amazon' && (
-                  <p className="mt-1.5 text-xs text-white/50">
-                    输入 Amazon ASIN（如 B08F7PTF53）可采集真实评论；输入其他关键词将使用演示数据
-                  </p>
-                )}
+                <p className="mt-1.5 text-xs text-white/50">
+                  {source === 'amazon'
+                    ? 'Amazon 请输入 ASIN（如 B08F7PTF53）；其他平台可输入中英文关键词'
+                    : '支持中英文关键词，如：AI meeting tool、AI 会议工具'}
+                </p>
                 {source === 'amazon' && /[\u4e00-\u9fa5]/.test(keyword) && (
                   <p className="mt-1 text-xs text-yellow-400/80">
                     ⚠ 检测到中文关键词：Amazon 评论为英文，建议改用英文关键词或直接输入 ASIN
