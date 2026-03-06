@@ -91,8 +91,35 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const topWords = extractTopWords(posts);
 
-  // Top3 痛点：按 score 降序取前3
-  const top3 = [...posts].sort((a, b) => b.score - a.score).slice(0, 3);
+  // Top5 痛点：按 score 降序取前5，占比用 helpfulVotes(commentCount) 加权
+  const top5 = [...posts].sort((a, b) => b.score - a.score).slice(0, 5);
+  const totalWeight = posts.reduce((s, p) => s + Math.max(p.commentCount, 1), 0);
+
+  // 情感分布
+  const posPosts = posts.filter((p) => p.score <= 20);
+  const neuPosts = posts.filter((p) => p.score > 20 && p.score <= 40);
+  const posPct = total > 0 ? Math.round((posPosts.length / total) * 100) : 0;
+  const neuPct = total > 0 ? Math.round((neuPosts.length / total) * 100) : 0;
+  const negPct = 100 - posPct - neuPct;
+
+  // 改进建议（基于高频痛点关键词生成）
+  function generateSuggestions(topPosts: Post[]): string[] {
+    const text = topPosts.map((p) => `${p.titleZh ?? p.title} ${p.content}`).join(' ').toLowerCase();
+    const suggestions: string[] = [];
+    if (/hot|heat|overheat|temperature/.test(text)) suggestions.push('改进散热设计：在底部增加散热孔或使用导热材料，将工作温度控制在 45°C 以内，规避安全隐患');
+    if (/noise|sound|buzzing|hum/.test(text)) suggestions.push('降低线圈噪音：优化驱动频率与线圈匝数比，确保静音充电，满足卧室夜间使用场景');
+    if (/slow|speed|15w|watt|fast/.test(text)) suggestions.push('提升实际充电效率：支持主流快充协议（15W+），并在包装显眼位置列出兼容设备型号，避免误导');
+    if (/align|coil|placement|spot/.test(text)) suggestions.push('扩大充电感应区域：优化线圈尺寸与多线圈排列，实现 ±15mm 容错范围，告别精准摆放');
+    if (/light|led|bright|blind/.test(text)) suggestions.push('新增 LED 亮度调节：提供亮/暗/关三档选择，或感应环境光自动调节，避免夜间睡眠干扰');
+    if (/case|thick|mm|cover/.test(text)) suggestions.push('提升手机壳兼容性：优化磁场穿透能力，支持 6mm 以上手机壳正常充电，并在详情页明确标注');
+    if (/stop|disconnect|intermittent|random/.test(text)) suggestions.push('修复固件断充问题：完善充电状态检测逻辑，消除随机断连，提供 OTA 固件升级通道');
+    if (/adapter|plug|included|box/.test(text)) suggestions.push('优化包装内容说明：在标题和首图明确标注是否含充电头，避免消费者期望落差');
+    if (/wobble|stand|base|tip/.test(text)) suggestions.push('加固底座设计：增加配重或防滑垫，确保单手取放手机时底座稳定不移位');
+    if (suggestions.length < 3) suggestions.push('建立快速售后响应机制：48 小时内响应差评，提供免费换货，将差评转化为品牌口碑资产');
+    if (suggestions.length < 3) suggestions.push('加强出厂质检标准：对过热、断充、噪音问题建立量化验收指标，从源头减少不良品流出');
+    return suggestions.slice(0, 3);
+  }
+  const suggestions = generateSuggestions(top5);
 
   const platformLabel: Record<string, string> = {
     amazon: 'Amazon',
@@ -159,12 +186,31 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
-        {/* 买家痛点 Top3 */}
-        {top3.length > 0 && (
+        {/* 情感分布 */}
+        {posts.length > 0 && (
+          <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs font-medium uppercase tracking-widest text-white/50">整体情感分布</p>
+            <div className="mt-3 flex h-3 w-full overflow-hidden rounded-full">
+              {posPct > 0 && <div style={{ width: `${posPct}%` }} className="bg-green-400" title={`好评 ${posPct}%`} />}
+              {neuPct > 0 && <div style={{ width: `${neuPct}%` }} className="bg-yellow-400" title={`中性 ${neuPct}%`} />}
+              {negPct > 0 && <div style={{ width: `${negPct}%` }} className="bg-red-400" title={`差评 ${negPct}%`} />}
+            </div>
+            <div className="mt-2 flex gap-4 text-xs text-white/60">
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-400" />好评 {posPct}%（{posPosts.length} 条）</span>
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-yellow-400" />中性 {neuPct}%（{neuPosts.length} 条）</span>
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-400" />差评 {negPct}%（{negPosts.length} 条）</span>
+            </div>
+          </div>
+        )}
+
+        {/* 买家痛点 Top5 */}
+        {top5.length > 0 && (
           <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold text-white">买家痛点 Top {top3.length}</h2>
+            <h2 className="font-display text-lg font-semibold text-white">买家痛点 Top {top5.length}</h2>
             <div className="mt-3 space-y-3">
-              {top3.map((post, i) => (
+              {top5.map((post, i) => {
+                const pct = Math.round((Math.max(post.commentCount, 1) / totalWeight) * 100);
+                return (
                 <div
                   key={post.id}
                   className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/8"
@@ -174,9 +220,14 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-white leading-snug">
-                        {post.titleZh ?? post.title}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-white leading-snug">
+                          {post.titleZh ?? post.title}
+                        </p>
+                        <span className="shrink-0 rounded-full bg-red-400/15 px-2 py-0.5 text-xs font-semibold text-red-300">
+                          {pct}% 关注
+                        </span>
+                      </div>
                       {post.titleZh && (
                         <p className="mt-0.5 text-xs text-white/40">{post.title}</p>
                       )}
@@ -209,6 +260,25 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                       </div>
                     </div>
                   </div>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 改进建议 */}
+        {suggestions.length > 0 && (
+          <div className="mt-8">
+            <h2 className="font-display text-lg font-semibold text-white">产品改进建议</h2>
+            <p className="mt-0.5 text-xs text-white/40">根据高频痛点自动生成</p>
+            <div className="mt-3 space-y-2">
+              {suggestions.map((s, i) => (
+                <div key={i} className="flex gap-3 rounded-xl border border-[#00C2FF]/15 bg-[#00C2FF]/5 px-4 py-3">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00C2FF]/20 text-xs font-bold text-[#00C2FF]">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-white/80 leading-relaxed">{s}</p>
                 </div>
               ))}
             </div>

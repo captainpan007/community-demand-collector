@@ -86,7 +86,12 @@ export default function NewPage() {
                 />
                 {source === 'amazon' && (
                   <p className="mt-1.5 text-xs text-white/50">
-                    输入品牌关键词或 Amazon ASIN（如 B08F7PTF53）
+                    输入 Amazon ASIN（如 B08F7PTF53）可采集真实评论；输入其他关键词将使用演示数据
+                  </p>
+                )}
+                {source === 'amazon' && /[\u4e00-\u9fa5]/.test(keyword) && (
+                  <p className="mt-1 text-xs text-yellow-400/80">
+                    ⚠ 检测到中文关键词：Amazon 评论为英文，建议改用英文关键词或直接输入 ASIN
                   </p>
                 )}
               </div>
