@@ -139,7 +139,9 @@ class AmazonCollector extends base_1.BaseCollector {
         return allMock.slice(0, limit);
     }
     async fetchRaw() {
+        this.log(`fetchRaw called: mock=${this.config.mock} keyword="${this.config.keyword}"`);
         if (this.config.mock) {
+            this.log('mock=true, returning mock data, skipping ASIN check');
             return this.fetchMock();
         }
         // ASIN 校验只在非 mock 模式执行
