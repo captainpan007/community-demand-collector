@@ -374,7 +374,7 @@ class AmazonCollector extends base_1.BaseCollector {
         });
         try {
             const page = await context.newPage();
-            const url = `https://www.amazon.com/product-reviews/${asin}?filterByStar=one_star&filterByStar=two_star&sortBy=recent`;
+            const url = `https://www.amazon.com/product-reviews/${asin}?sortBy=recent`;
             this.log(`Playwright → ${url}`);
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
             const title = await page.title();
@@ -386,10 +386,13 @@ class AmazonCollector extends base_1.BaseCollector {
                     this.platform
                 );
             }
-            // 等待评论加载
-            await page.waitForSelector('[data-hook="review"]', { timeout: 15000 }).catch(() => {
+            // 等待评论加载（超时前先截图供调试）
+            const DEBUG_SCREENSHOT = path.join(os.homedir(), '.demand-collector', 'debug.png');
+            await page.waitForSelector('[data-hook="review"]', { timeout: 15000 }).catch(async (err) => {
+                try { await page.screenshot({ path: DEBUG_SCREENSHOT, fullPage: true }); } catch {}
+                this.log(`Screenshot saved to ${DEBUG_SCREENSHOT}`);
                 throw new types_1.CollectorError(
-                    `No reviews found for ASIN ${asin}. The product may have no 1-2 star reviews, or the page structure changed.`,
+                    `No reviews found for ASIN ${asin}. Screenshot saved to ${DEBUG_SCREENSHOT}. The page may be showing a CAPTCHA or the structure changed.`,
                     this.platform
                 );
             });
