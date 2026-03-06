@@ -38,7 +38,9 @@ export async function POST(req: Request) {
   try {
     // amazon: 有 auth 文件走真实采集，否则 fallback mock
     const amazonAuthMissing = source === 'amazon' && !existsSync(AMAZON_AUTH_PATH);
-    const mock = source !== 'amazon' || amazonAuthMissing;
+    const isValidAsin = (s: string) => /^[A-Z0-9]{10}$/.test(s.trim().toUpperCase());
+    const keywordIsAsin = source === 'amazon' && isValidAsin(keyword);
+    const mock = source !== 'amazon' || amazonAuthMissing || !keywordIsAsin;
     console.log(`[collect] source=${source} mock=${mock} amazonAuthMissing=${amazonAuthMissing} authPath=${AMAZON_AUTH_PATH}`);
     const result = await runCollect({
       keyword,
