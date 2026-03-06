@@ -69,7 +69,7 @@ async function runCollect(override) {
     const analyzer = new keyword_counter_1.KeywordAnalyzer();
     const ranker = new demand_ranker_1.DemandRanker();
     const keywords = analyzer.analyze(posts, 30);
-    let topDemands = ranker.rank(posts, Math.min(10, posts.length));
+    let topDemands = ranker.rank(posts, posts.length);
     if (override?.translate) {
         const translator = (0, translators_1.createTranslator)({ mock: override?.mock ?? false });
         topDemands = await translator.translate(topDemands);

@@ -79,7 +79,7 @@ export async function runCollect(
   const ranker = new DemandRanker();
 
   const keywords = analyzer.analyze(posts, 30);
-  let topDemands = ranker.rank(posts, Math.min(10, posts.length));
+  let topDemands = ranker.rank(posts, posts.length);
 
   if (override?.translate) {
     const translator = createTranslator({ mock: override?.mock ?? false });

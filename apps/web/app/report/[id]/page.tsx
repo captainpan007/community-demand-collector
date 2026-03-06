@@ -100,7 +100,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const neuPosts = posts.filter((p) => p.score > 20 && p.score <= 40);
   const posPct = total > 0 ? Math.round((posPosts.length / total) * 100) : 0;
   const neuPct = total > 0 ? Math.round((neuPosts.length / total) * 100) : 0;
-  const negPct = 100 - posPct - neuPct;
+  const negPct = total > 0 ? Math.round((negPosts.length / total) * 100) : 0;
 
   // 改进建议（基于高频痛点关键词生成）
   function generateSuggestions(topPosts: Post[]): string[] {
