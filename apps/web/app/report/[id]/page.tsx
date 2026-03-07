@@ -86,10 +86,6 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     : '现有产品用户满意度高，入场需要明确差异化优势';
   const verdictColor = hasOpportunity ? 'text-green-400' : 'text-blue-400';
   const verdictBg = hasOpportunity ? 'bg-green-400/10 border-green-400/30' : 'bg-blue-400/10 border-blue-400/30';
-  // 差评标题 tags（去重，保留 title + titleZh）
-  const negTagPosts = negPosts
-    .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
-    .slice(0, 12);
 
   const topWords = extractTopWords(posts);
 
@@ -305,7 +301,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <div className="mt-2 flex flex-wrap gap-2">
               {top5.map((post, i) => {
                 const pct = Math.round((Math.max(post.commentCount, 1) / totalWeight) * 100);
-                const alpha = (0.12 + (pct / 100) * 0.28).toFixed(2);
+                const alpha = pct > 15 ? '0.30' : pct >= 10 ? '0.18' : '0.08';
                 return (
                   <a
                     key={post.id}
@@ -336,25 +332,6 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                   </span>
                   <p className="text-sm text-white/80 leading-relaxed">{s}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 差评关键词 */}
-        {negTagPosts.length > 0 && (
-          <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold text-white">差评关键词</h2>
-            <p className="mt-0.5 text-xs text-white/40">来自 score &gt; 40 的评论标题</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {negTagPosts.map((p, i) => (
-                <span
-                  key={i}
-                  className="rounded-full border border-red-400/20 bg-red-400/10 px-3 py-1 text-xs text-red-300"
-                >
-                  {p.title}
-                  {p.titleZh && <span className="text-red-300/60">（{p.titleZh}）</span>}
-                </span>
               ))}
             </div>
           </div>
