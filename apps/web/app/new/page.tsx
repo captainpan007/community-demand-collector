@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,9 @@ export default function NewPage() {
   const [source, setSource] = useState<'reddit' | 'hackernews' | 'amazon' | 'trustpilot' | 'tiktokshop' | 'shopee'>('hackernews');
   const [subreddits, setSubreddits] = useState('');
   const [loading, setLoading] = useState(false);
+  const [progressMsg, setProgressMsg] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   function handleKeywordChange(val: string) {
     if (source === 'amazon') {
@@ -63,6 +65,13 @@ export default function NewPage() {
     }
     setError(null);
     setLoading(true);
+    setProgressMsg('正在连接数据源...');
+    const steps: [number, string][] = [
+      [3000, '正在抓取评论数据...'],
+      [8000, '正在分析买家痛点...'],
+      [15000, '正在生成选品报告...'],
+    ];
+    timersRef.current = steps.map(([delay, msg]) => setTimeout(() => setProgressMsg(msg), delay));
     try {
       const res = await fetch('/api/collect', {
         method: 'POST',
@@ -80,6 +89,9 @@ export default function NewPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '采集失败');
     } finally {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      setProgressMsg('');
       setLoading(false);
     }
   }
@@ -175,9 +187,14 @@ export default function NewPage() {
               {error && (
                 <p className="text-sm text-red-400">{error}</p>
               )}
-              <Button type="submit" disabled={loading} size="lg">
-                {loading ? '采集中…' : '开始采集'}
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button type="submit" disabled={loading} size="lg">
+                  {loading ? '采集中…' : '开始采集'}
+                </Button>
+                {progressMsg && (
+                  <span className="animate-pulse text-sm text-[#00C2FF]/80">{progressMsg}</span>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>

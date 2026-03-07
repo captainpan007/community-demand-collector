@@ -9,6 +9,36 @@ import { homedir } from 'os';
 
 const AMAZON_AUTH_PATH = join(homedir(), '.demand-collector', 'amazon-auth.json');
 
+async function translateMissingTitles(
+  topDemands: Array<Record<string, unknown>>
+): Promise<void> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return;
+  const missing = topDemands.filter((p) => !p.titleZh && p.title);
+  if (missing.length === 0) return;
+  const baseUrl = (process.env.OPENAI_BASE_URL ?? '').replace(/\/$/, '');
+  const apiUrl = process.env.OPENAI_API_URL ??
+    (baseUrl ? `${baseUrl}/chat/completions` : 'https://api.openai.com/v1/chat/completions');
+  const model = process.env.OPENAI_MODEL ?? 'moonshot-v1-8k';
+  const titles = missing.map((p, i) => `${i + 1}. ${p.title as string}`).join('\n');
+  const prompt = `将以下电商评论标题翻译成简洁中文（每条不超过20字），保持原意。输出纯 JSON 数组，无 markdown，格式：["翻译1","翻译2"]:\n${titles}`;
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3 }),
+    });
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const content = data.choices?.[0]?.message?.content ?? '[]';
+    const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, '').trim()) as string[];
+    if (Array.isArray(parsed)) {
+      missing.forEach((p, i) => { if (parsed[i]) p.titleZh = parsed[i]; });
+    }
+  } catch (err) {
+    console.warn('[collect] translateMissingTitles failed:', err);
+  }
+}
+
 async function generateAISuggestions(
   keyword: string,
   source: string,
@@ -104,6 +134,12 @@ export async function POST(req: Request) {
       (result as Record<string, unknown>).demoMode = true;
     }
 
+    // 翻译缺少中文标题的评论
+    try {
+      const allDemands = (result.analysis?.topDemands ?? []) as Array<Record<string, unknown>>;
+      await translateMissingTitles(allDemands.slice(0, 5));
+    } catch { /* ignore */ }
+
     // AI 改进建议：基于实际 topDemands 生成
     try {
       const topPosts = (result.analysis?.topDemands ?? [])
@@ -147,7 +183,7 @@ export async function POST(req: Request) {
     const label = platformLabel[source] ?? source;
     const baseTitle =
       source === 'amazon'
-        ? (productTitle ?? (isValidAsin2(keyword) ? keyword.toUpperCase() : null) ?? 'Amazon 商品')
+        ? (productTitle ?? (isValidAsin2(keyword) ? `Amazon 商品 ${keyword.toUpperCase()}` : null) ?? 'Amazon 商品')
         : keyword;
     const reportTitle = `${baseTitle} - ${label}`;
     const report = await prisma.report.create({

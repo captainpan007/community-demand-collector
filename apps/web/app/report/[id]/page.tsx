@@ -107,7 +107,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const top1Label = top5[0]?.titleZh ?? top5[0]?.title ?? '核心痛点';
   const actionConclusion =
     negRatio > 0.5
-      ? `✅ 值得入场 —— 建议切入点：解决"${top1Label}"问题`
+      ? `✅ 值得入场 —— 建议切入点：解决「${top1Label}」问题`
       : negRatio >= 0.3
         ? '⚠️ 谨慎入场 —— 市场竞争激烈，需明确差异化优势'
         : '❌ 暂缓入场 —— 现有产品用户满意度高，入场需更强差异化';
