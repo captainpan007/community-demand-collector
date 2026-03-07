@@ -27,7 +27,7 @@ export function Nav() {
           >
             设置
           </Link>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </div>
     </nav>

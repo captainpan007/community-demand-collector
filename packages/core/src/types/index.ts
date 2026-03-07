@@ -1,6 +1,6 @@
 // ── 平台标识 ──────────────────────────────────────────────────────────
 
-export type Platform = 'reddit' | 'hackernews' | 'trustpilot' | 'amazon';
+export type Platform = 'reddit' | 'hackernews' | 'trustpilot' | 'amazon' | 'tiktokshop' | 'shopee';
 
 // ── 采集器配置 ────────────────────────────────────────────────────────
 

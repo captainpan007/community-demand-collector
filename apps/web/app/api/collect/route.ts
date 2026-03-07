@@ -131,12 +131,12 @@ export async function POST(req: Request) {
       mock,
     });
     if (amazonAuthMissing) {
-      (result as Record<string, unknown>).demoMode = true;
+      (result as unknown as Record<string, unknown>).demoMode = true;
     }
 
     // 翻译缺少中文标题的评论
     try {
-      const allDemands = (result.analysis?.topDemands ?? []) as Array<Record<string, unknown>>;
+      const allDemands = (result.analysis?.topDemands ?? []) as unknown as Array<Record<string, unknown>>;
       await translateMissingTitles(allDemands.slice(0, 5));
     } catch { /* ignore */ }
 
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
         .slice(0, 5) as Array<{ title: string; titleZh?: string; content: string }>;
       const suggestions = await generateAISuggestions(keyword, source, topPosts);
       if (suggestions.length > 0) {
-        (result as Record<string, unknown>).suggestions = suggestions;
+        (result as unknown as Record<string, unknown>).suggestions = suggestions;
       }
     } catch {
       // ignore, report page will show nothing
@@ -156,10 +156,10 @@ export async function POST(req: Request) {
     // Extract product title from Amazon reviews (stored per-post by collector)
     const productTitle: string | null =
       source === 'amazon'
-        ? ((result.analysis?.topDemands?.[0] as Record<string, unknown>)?.productTitle as string | null) ?? null
+        ? ((result.analysis?.topDemands?.[0] as unknown as Record<string, unknown>)?.productTitle as string | null) ?? null
         : null;
     if (productTitle) {
-      (result as Record<string, unknown>).productTitle = productTitle;
+      (result as unknown as Record<string, unknown>).productTitle = productTitle;
     }
 
     const charts: string[] = [];
