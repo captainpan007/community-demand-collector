@@ -89,9 +89,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const topWords = extractTopWords(posts);
 
-  // Top5 痛点：按 score 降序取前5，占比用 helpfulVotes(commentCount) 加权
+  // Top5 痛点：按 score 降序取前5，关注度 = 该评论数 / 总差评数
   const top5 = [...posts].sort((a, b) => b.score - a.score).slice(0, 5);
-  const totalWeight = posts.reduce((s, p) => s + Math.max(p.commentCount, 1), 0);
 
   // 情感分布
   const posPosts = posts.filter((p) => p.score <= 20);
@@ -232,7 +231,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <h2 className="font-display text-lg font-semibold text-white">买家痛点 Top {top5.length}</h2>
             <div className="mt-3 space-y-3">
               {top5.map((post, i) => {
-                const pct = Math.round((Math.max(post.commentCount, 1) / totalWeight) * 100);
+                const pct = Math.round((1 / Math.max(negCount, 1)) * 100);
                 return (
                 <div
                   key={post.id}
@@ -300,7 +299,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <p className="text-xs font-medium uppercase tracking-widest text-white/50">核心痛点标签</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {top5.map((post, i) => {
-                const pct = Math.round((Math.max(post.commentCount, 1) / totalWeight) * 100);
+                const pct = Math.round((1 / Math.max(negCount, 1)) * 100);
                 const alpha = pct > 15 ? '0.30' : pct >= 10 ? '0.18' : '0.08';
                 return (
                   <a
