@@ -42,7 +42,7 @@ program
     const appConfig: AppConfig = loadConfig();
     const keyword: string =
       options.keyword || appConfig.defaults.keywords[0] || 'AI';
-    const source: string = options.source || appConfig.defaults.source;
+    const source = (options.source || appConfig.defaults.source) as CollectorConfig['source'];
     const limit: number = options.limit
       ? parseInt(options.limit, 10)
       : appConfig.defaults.limit;
@@ -91,7 +91,7 @@ program
         await saveReportData(reportData, path.resolve(options.json));
       }
 
-      const history = loadHistoryReportsSync(appConfig.storage.historyDir);
+      const history = await loadHistoryReportsSync(appConfig.storage.historyDir);
       const wordCloudUrl = buildWordCloudChart(
         reportData.analysis.keywords,
         appConfig,
@@ -140,7 +140,7 @@ program
       .split(',')
       .map((s: string) => s.trim())
       .filter(Boolean);
-    const source: string = options.source || appConfig.defaults.source;
+    const source = (options.source || appConfig.defaults.source) as CollectorConfig['source'];
     const limit: number = options.limit
       ? parseInt(options.limit, 10)
       : appConfig.defaults.limit;

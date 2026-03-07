@@ -150,8 +150,8 @@ export async function runReport(
   format: 'md' | 'csv' = 'md',
 ): Promise<ReportData> {
   const appCfg = getConfig();
-  const data = loadReportData(inputJsonPath);
-  const history = loadHistoryReportsSync(appCfg.storage.historyDir);
+  const data = await loadReportData(inputJsonPath);
+  const history = await loadHistoryReportsSync(appCfg.storage.historyDir);
 
   const wordCloudUrl = await buildWordCloudChartInternal(data.analysis.keywords, appCfg);
   const trendUrl = await buildTrendChartInternal(history, appCfg);
@@ -214,19 +214,19 @@ export function stopScheduler(): Promise<void> {
 export function buildWordCloudChart(
   keywords: Map<string, number> | Record<string, number>,
   config?: AppConfig,
-): Promise<string | null> {
+): string | null {
   const appCfg = config ?? getConfig();
   const map =
     keywords instanceof Map ? keywords : new Map(Object.entries(keywords));
-  return buildWordCloudChartInternal(map, appCfg);
+  return buildWordCloudChartInternal(map, appCfg) || null;
 }
 
 export function buildTrendChart(
   historyReports: StoredReportData[],
   config?: AppConfig,
-): Promise<string | null> {
+): string | null {
   const appCfg = config ?? getConfig();
-  return buildTrendChartInternal(historyReports, appCfg);
+  return buildTrendChartInternal(historyReports, appCfg) || null;
 }
 
 export async function loadHistoryReports(

@@ -8,6 +8,7 @@ import type {
   AnalysisResult,
   BatchKeywordResult,
   BatchReportData,
+  ReportData,
 } from './types';
 import { getConfig } from './config';
 import { RedditCollector } from './collectors/reddit';
