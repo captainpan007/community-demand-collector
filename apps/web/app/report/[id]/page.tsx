@@ -65,10 +65,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   if (!report) notFound();
 
   let reportData: ReportData | null = null;
-  let charts: string[] = [];
   try {
     if (report.reportData) reportData = JSON.parse(report.reportData) as ReportData;
-    if (report.charts) charts = JSON.parse(report.charts) as string[];
   } catch {
     // ignore
   }
@@ -109,6 +107,37 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   // 改进建议：优先使用采集时 AI 生成的内容，无则不展示
   const suggestions: string[] = reportData?.suggestions ?? [];
 
+  // 一句话行动结论
+  const top1Label = top5[0]?.titleZh ?? top5[0]?.title ?? '核心痛点';
+  const actionConclusion =
+    negRatio > 0.5
+      ? `✅ 值得入场 —— 建议切入点：解决"${top1Label}"问题`
+      : negRatio >= 0.3
+        ? '⚠️ 谨慎入场 —— 市场竞争激烈，需明确差异化优势'
+        : '❌ 暂缓入场 —— 现有产品用户满意度高，入场需更强差异化';
+  const actionBg =
+    negRatio > 0.5
+      ? 'bg-green-400/10 border-green-400/30 text-green-300'
+      : negRatio >= 0.3
+        ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-300'
+        : 'bg-red-400/10 border-red-400/30 text-red-300';
+
+  function safeTitle(raw: string | undefined | null): string {
+    if (!raw) return 'Amazon 商品';
+    if (raw.startsWith('http')) {
+      const m = raw.match(/(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})/i);
+      return m ? m[1].toUpperCase() : 'Amazon 商品';
+    }
+    return raw;
+  }
+
+  const isAsin = (s: string) => /^[A-Z0-9]{10}$/.test(s);
+  const displayTitle =
+    reportData?.productTitle ||
+    (config?.keyword && isAsin(config.keyword) ? config.keyword : null) ||
+    safeTitle(report.title) ||
+    'Amazon 商品';
+
   const platformLabel: Record<string, string> = {
     amazon: 'Amazon',
     reddit: 'Reddit',
@@ -126,7 +155,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         {/* 顶部信息 */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <h1 className="font-display text-2xl font-bold text-white">
-            {reportData?.productTitle ?? config?.keyword ?? report.title}
+            {displayTitle}
           </h1>
           {config?.source && (
             <span className="rounded-full bg-[#00C2FF]/20 px-3 py-0.5 text-xs font-medium text-[#00C2FF]">
@@ -177,6 +206,13 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
+        {/* 行动结论 */}
+        {posts.length > 0 && (
+          <div className={`mt-3 rounded-xl border px-4 py-3 text-sm font-semibold ${actionBg}`}>
+            {actionConclusion}
+          </div>
+        )}
+
         {/* 情感分布 */}
         {posts.length > 0 && (
           <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
@@ -204,6 +240,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 return (
                 <div
                   key={post.id}
+                  id={`pain-${i}`}
                   className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/8"
                 >
                   <div className="flex items-start gap-3">
@@ -261,6 +298,31 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
+        {/* 核心痛点标签 */}
+        {top5.length > 0 && (
+          <div className="mt-5">
+            <p className="text-xs font-medium uppercase tracking-widest text-white/50">核心痛点标签</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {top5.map((post, i) => {
+                const pct = Math.round((Math.max(post.commentCount, 1) / totalWeight) * 100);
+                const alpha = (0.12 + (pct / 100) * 0.28).toFixed(2);
+                return (
+                  <a
+                    key={post.id}
+                    href={`#pain-${i}`}
+                    className="rounded-full border border-red-400/30 px-3 py-1 text-xs font-medium text-red-300 transition hover:border-red-400/60"
+                    style={{ backgroundColor: `rgba(248,113,113,${alpha})` }}
+                  >
+                    {(post.titleZh ?? post.title).slice(0, 30)}
+                    {(post.titleZh ?? post.title).length > 30 ? '…' : ''}
+                    <span className="ml-1 text-red-300/60">{pct}%</span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 改进建议 */}
         {suggestions.length > 0 && (
           <div className="mt-8">
@@ -275,16 +337,6 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                   <p className="text-sm text-white/80 leading-relaxed">{s}</p>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* 词云 */}
-        {charts.length > 0 && (
-          <div className="mt-8">
-            <h2 className="font-display text-lg font-semibold text-white">高频词云</h2>
-            <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
-              <img src={charts[0]} alt="词云" className="w-full" />
             </div>
           </div>
         )}
