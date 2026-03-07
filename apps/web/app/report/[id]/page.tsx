@@ -89,8 +89,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const topWords = extractTopWords(posts);
 
-  // Top5 痛点：按 score 降序取前5，关注度 = 该评论数 / 总差评数
-  const top5 = [...posts].sort((a, b) => b.score - a.score).slice(0, 5);
+  // 痛点列表：差评数 < 3 只显示实际差评数，否则 Top5
+  const painLimit = negCount < 3 ? negCount : 5;
+  const top5 = [...negPosts].sort((a, b) => b.score - a.score).slice(0, painLimit);
 
   // 情感分布
   const posPosts = posts.filter((p) => p.score <= 20);
@@ -231,7 +232,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <h2 className="font-display text-lg font-semibold text-white">买家痛点 Top {top5.length}</h2>
             <div className="mt-3 space-y-3">
               {top5.map((post, i) => {
-                const pct = Math.round((1 / Math.max(negCount, 1)) * 100);
+                const attentionLabel = negCount >= 5
+                  ? `${Math.round((1 / negCount) * 100)}% 关注`
+                  : `仅 ${negCount} 条提及`;
                 return (
                 <div
                   key={post.id}
@@ -251,7 +254,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                           )}
                         </p>
                         <span className="shrink-0 rounded-full bg-red-400/15 px-2 py-0.5 text-xs font-semibold text-red-300">
-                          {pct}% 关注
+                          {attentionLabel}
                         </span>
                       </div>
                       {post.titleZh && (
@@ -299,8 +302,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <p className="text-xs font-medium uppercase tracking-widest text-white/50">核心痛点标签</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {top5.map((post, i) => {
-                const pct = Math.round((1 / Math.max(negCount, 1)) * 100);
-                const alpha = pct > 15 ? '0.30' : pct >= 10 ? '0.18' : '0.08';
+                const pct = negCount >= 5 ? Math.round((1 / negCount) * 100) : 0;
+                const alpha = pct > 15 ? '0.30' : pct >= 10 ? '0.18' : '0.20';
                 return (
                   <a
                     key={post.id}
@@ -310,7 +313,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                   >
                     {(post.titleZh ?? post.title).slice(0, 30)}
                     {(post.titleZh ?? post.title).length > 30 ? '…' : ''}
-                    <span className="ml-1 text-red-300/60">{pct}%</span>
+                    {pct > 0 && <span className="ml-1 text-red-300/60">{pct}%</span>}
                   </a>
                 );
               })}
