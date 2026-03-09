@@ -14,6 +14,7 @@ export default function RootLayout({
   return (
     <ClerkProvider
       publishableKey={process.env.CLERK_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''}
+      secretKey={process.env.CLERK_SECRET_KEY}
     >
       <html lang="zh-CN">
         <body className="min-h-screen antialiased">
