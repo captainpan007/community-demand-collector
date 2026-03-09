@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   const env = {
@@ -7,5 +8,14 @@ export async function GET() {
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     nodeEnv: process.env.NODE_ENV,
   };
-  return NextResponse.json({ status: 'ok', env });
+
+  let db = { connected: false, error: '', userCount: -1 };
+  try {
+    const count = await prisma.user.count();
+    db = { connected: true, error: '', userCount: count };
+  } catch (e: unknown) {
+    db = { connected: false, error: String(e instanceof Error ? e.message : e), userCount: -1 };
+  }
+
+  return NextResponse.json({ status: 'ok', env, db });
 }
