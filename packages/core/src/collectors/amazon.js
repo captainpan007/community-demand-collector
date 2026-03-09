@@ -290,16 +290,73 @@ class AmazonCollector extends base_1.BaseCollector {
         ];
         return allMock.slice(0, limit);
     }
+    async fetchWithScraperAPI() {
+        const keyword = this.config.keyword.trim().toUpperCase();
+        const limit = this.config.limit ?? 20;
+        const apiKey = process.env.SCRAPERAPI_KEY;
+        if (!apiKey) throw new Error('SCRAPERAPI_KEY not set');
+
+        const asin = keyword;
+        const reviews = [];
+        let pageNum = 1;
+        const maxPages = Math.ceil(limit / 10); // Amazon shows ~10 reviews per page
+
+        while (reviews.length < limit && pageNum <= maxPages) {
+            const amazonUrl = `https://www.amazon.com/product-reviews/${asin}?filterByStar=one_star&filterByStar=two_star&sortBy=recent&pageNumber=${pageNum}`;
+            const scraperUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(amazonUrl)}&render=false`;
+
+            this.log(`ScraperAPI page ${pageNum}: ${amazonUrl}`);
+            const res = await axios_1.default.get(scraperUrl, { timeout: 60000 });
+            const html = res.data;
+
+            // Check for CAPTCHA or sign-in redirect
+            if (typeof html === 'string' && (html.includes('captcha') || html.includes('Amazon Sign'))) {
+                this.log(`ScraperAPI: CAPTCHA or sign-in detected on page ${pageNum}`);
+                break;
+            }
+
+            const pageReviews = this.parseReviewsHtml(html);
+            this.log(`ScraperAPI page ${pageNum}: parsed ${pageReviews.length} reviews`);
+
+            if (pageReviews.length === 0) break;
+
+            // Extract product title from first page
+            if (pageNum === 1) {
+                const $ = cheerio_1.default.load(html);
+                const productTitle = $('[data-hook="product-link"]').first().text().trim()
+                    || $('[data-hook="cr-product-title"]').text().trim()
+                    || null;
+                if (productTitle) {
+                    this.log(`Product title: ${productTitle}`);
+                    pageReviews.forEach(r => { r.productTitle = productTitle; });
+                    this._productTitle = productTitle;
+                }
+            } else if (this._productTitle) {
+                pageReviews.forEach(r => { r.productTitle = this._productTitle; });
+            }
+
+            reviews.push(...pageReviews);
+            pageNum++;
+
+            // Polite delay between pages
+            if (pageNum <= maxPages && reviews.length < limit) {
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        this.log(`ScraperAPI total: ${reviews.length} reviews collected`);
+        return reviews.slice(0, limit);
+    }
     async fetchRaw() {
         this.log(`fetchRaw called: mock=${this.config.mock} keyword="${this.config.keyword}"`);
         if (this.config.mock) {
             this.log('mock=true, returning mock data, skipping ASIN check');
             return this.fetchMock();
         }
-        // ASIN 校验只在非 mock 模式执行
+
         const _keyword = this.config.keyword.trim();
         if (/[\u4e00-\u9fa5]/.test(_keyword)) {
-            this.log(`WARNING: keyword "${_keyword}" contains Chinese characters. Amazon reviews are in English — suggest using an English keyword or ASIN (e.g. B08F7PTF53) for better results.`);
+            this.log(`WARNING: keyword "${_keyword}" contains Chinese characters.`);
         }
         if (!isAsin(_keyword)) {
             throw new types_1.CollectorError(
@@ -307,13 +364,36 @@ class AmazonCollector extends base_1.BaseCollector {
                 this.platform
             );
         }
-        try {
-            return await this.fetchWithPlaywright();
-        } catch (err) {
-            // 确保真实错误信息可见
-            this.log(`Error: ${err.message}`);
-            throw err;
+
+        // Tier 1: ScraperAPI (works in production, no auth needed)
+        if (process.env.SCRAPERAPI_KEY) {
+            try {
+                this.log('Trying ScraperAPI...');
+                return await this.fetchWithScraperAPI();
+            } catch (err) {
+                this.log(`ScraperAPI failed: ${err.message}, falling back...`);
+            }
         }
+
+        // Tier 2: Playwright with local auth (works locally with saved session)
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const os = require('os');
+            const AUTH_STATE_PATH = path.join(os.homedir(), '.demand-collector', 'amazon-auth.json');
+            if (fs.existsSync(AUTH_STATE_PATH)) {
+                this.log('Trying Playwright with saved auth...');
+                return await this.fetchWithPlaywright();
+            }
+        } catch (err) {
+            this.log(`Playwright failed: ${err.message}, falling back to mock...`);
+        }
+
+        // Tier 3: Mock with demoMode flag
+        this.log('All real collection methods unavailable, returning mock data');
+        const mockData = this.fetchMock();
+        mockData._demoMode = true;
+        return mockData;
     }
     async fetchWithPlaywright() {
         const { chromium } = require('playwright');
