@@ -22,9 +22,13 @@
 ✅ Trustpilot 真实采集：Playwright 采集，过滤 1-2 星差评（?stars=1&stars=2），Web 端 mock:false
 ✅ Amazon 采集三层 fallback：ScraperAPI → Playwright → Mock（ScraperAPI 免费版暂不可用，架构已就位）
 ✅ 报告详情页增强：星级分布图 / Verified Purchase 标签 / helpful 数 / 图片评论标识
+✅ Playwright 多页采集 + 客户端差评过滤（Amazon 对 headless 浏览器忽略 filterByStar）
+✅ Amazon 采集器单元测试：33 项 vitest 测试全部通过
+✅ 临时管理 API：`/api/admin/set-pro`（Bearer token 鉴权，用于手动管理订阅状态）
 
 ## 待完成
 - G2 采集器（未开始）
+- 删除 `/api/admin/set-pro` 临时接口（7天后）
 
 ## 关键文件
 - `packages/core/src/collectors/amazon.js` - Amazon 采集器（ScraperAPI + Playwright + Mock 三层 fallback）
@@ -35,6 +39,9 @@
 - `apps/web/app/report/[id]/page.tsx` - 报告详情页（选品结论/痛点/词云/差评词）
 - `apps/web/app/api/subscribe/route.ts` - Lemon Squeezy Checkout
 - `apps/web/prisma/schema.prisma` - 数据库模型
+- `apps/web/app/api/admin/set-pro/route.ts` - 临时管理 API（Bearer 鉴权，7天后删除）
+- `packages/core/src/collectors/amazon.test.js` - Amazon 采集器测试（33 项）
+- `vitest.config.js` - Vitest 测试配置
 - `apps/web/next.config.mjs` - serverExternalPackages: ['playwright']
 
 ## 环境变量位置
@@ -42,6 +49,7 @@
 - Web 本地: `apps/web/.env.local` 和 `apps/web/.env`
 - Web 生产: `apps/web/.env.production`（已 git add -f，含 Clerk keys + DATABASE_URL）
 - ScraperAPI: `SCRAPERAPI_KEY`（各 env 文件 + Railway 环境变量，免费版暂不可用于 Amazon）
+- 测试: `npx vitest run`（根目录执行，vitest.config.js 配置）
 
 ## Railway 部署踩坑总结
 

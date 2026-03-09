@@ -1,5 +1,50 @@
 # 开发日志
 
+## 2026-03-09（第三轮）
+
+### Playwright 差评采集修复
+- ✅ 根因调查：Amazon 对 headless 浏览器启用 "limited selection" 模式，服务端完全忽略 `filterByStar` URL 参数
+- ✅ 解决方案：移除 `filterByStar`，改为多页采集 + 客户端差评过滤
+  - 分页循环：`pageNumber=1..10`，按 `sortBy=recent` 抓取全部评论
+  - 跨页去重：用 `Set<id>` 防止重复
+  - 客户端排序：stars ≤ 3 优先排前，再补充非差评
+- ⚠️ Amazon "limited selection" 模式下每页仅返回 ~8 条评论，多页抓取也只能拿到有限数量
+
+### Cheerio 兼容性 Bug 修复
+- ✅ 发现 `cheerio_1.default.load()` 在 cheerio v1.2.0 下报 TypeError
+- 原因：cheerio v1.2.0 设置 `__esModule: true`，`__importDefault()` 不再包装 `{ default: module }`，导致 `.default` 为 `undefined`
+- 修复：`cheerio_1.default.load()` → `cheerio_1.load()`（影响 `parseReviewsHtml` 和 ScraperAPI 的 product title 提取）
+- 此 Bug 会导致 ScraperAPI 采集（Tier 1）在 cheerio 解析阶段崩溃
+
+### Amazon 采集器测试套件
+- ✅ 新增 `packages/core/src/collectors/amazon.test.js`（33 项测试，全部通过）
+- ✅ 新增 `vitest.config.js`，`package.json` test 脚本改为 `vitest run`
+- 测试覆盖：
+  - ASIN 校验（4 项）：非法输入、中文、大小写
+  - fetchMock（4 项）：limit、字段完整性、上限、星级分布
+  - parsePost（6 项）：字段映射、score 计算、默认值、productTitle
+  - parseReviewsHtml（11 项）：HTML 解析全字段、空页面、CAPTCHA
+  - fetchRaw fallback（3 项）：mock 直通、demoMode 兜底、ScraperAPI 优先级
+  - collect() 集成（4 项）：端到端 Post 结构、config 校验、score 映射
+- 测试中 mock `fs.existsSync` 防止 Playwright 实际启动
+
+### 临时管理 API
+- ✅ 新增 `/api/admin/set-pro`（POST 设置订阅状态，GET 列出所有用户）
+- 鉴权：Bearer token = `CLERK_SECRET_KEY`
+- Clerk middleware 已添加 `/api/admin(.*)` 到公开路由
+- 用途：手动为用户开启/关闭 Pro 权限（7 天后删除）
+- 已为 3 个账号开启 Pro：
+  - `1965183733@qq.com` → active
+  - `1083604499@qq.com` → active
+  - `xiongmaopan7@gmail.com` → active
+
+### 提交记录
+- `9728ffd` fix: rewrite Playwright collection with multi-page pagination and client-side critical filtering
+- `e3d1069` feat: add temp admin API, amazon tests, fix cheerio import
+- `66e26bd` fix: add /api/admin to public routes in Clerk middleware
+
+---
+
 ## 2026-03-09（续）
 
 ### Amazon 采集架构升级
