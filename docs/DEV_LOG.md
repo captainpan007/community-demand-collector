@@ -1,5 +1,23 @@
 # 开发日志
 
+## 2026-03-09
+
+### Railway 部署修复
+- ✅ 排查 500 错误根因：环境变量在 Railway runtime 读不到
+- ✅ 创建 `apps/web/.env.production`，写入 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`、`CLERK_SECRET_KEY`、`DATABASE_URL`
+- ✅ 文件被 `.gitignore` 的 `.env.*` 规则忽略，用 `git add -f` 强制跟踪
+- ✅ 修复 `middleware.ts` matcher 正则：`\\\\.` 双转义改为 `\\.`
+- ✅ 新增 `/api/health` 诊断端点，返回环境变量加载状态（不暴露值）
+- ✅ `railway.json` 改回 Nixpacks，buildCommand 改为 `cd apps/web && npm ci && npx prisma generate && npx next build`
+- ✅ Health check 确认：Clerk keys 已加载，DATABASE_URL 需在 Railway Variables 或 `.env.production` 中设置
+- 踩坑记录：
+  - Playwright Docker 镜像（`mcr.microsoft.com/playwright:v1.52.0-jammy`）标签不存在，可用标签为 `jammy`/`noble`/`latest`
+  - Nixpacks 只在根目录执行 `npm install`，子目录 `apps/web` 依赖需要在 buildCommand 里显式 `npm ci`
+  - `NEXT_PUBLIC_` 变量必须 build time 存在，仅设 Railway 环境变量不够（runtime 才注入）
+  - Supabase Session Pooler 端口 5432（非 6543），Railway 是 IPv4 网络
+
+---
+
 ## 2026-03-06
 
 ### 新增 TikTok Shop 采集器

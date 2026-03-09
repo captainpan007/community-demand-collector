@@ -37,7 +37,41 @@
 
 ## 环境变量位置
 - CLI: 根目录 `.env`
-- Web: `apps/web/.env.local` 和 `apps/web/.env`
+- Web 本地: `apps/web/.env.local` 和 `apps/web/.env`
+- Web 生产: `apps/web/.env.production`（已 git add -f，含 Clerk keys + DATABASE_URL）
+
+## Railway 部署踩坑总结
+
+### 1. Node.js 版本
+- 问题：Nixpacks 默认 Node 18，Next.js 需要 >=20.9
+- 修复：创建 `.node-version` 文件写 20，加 `nixpacks.toml` 指定 `nodejs_20`
+
+### 2. Prisma 权限
+- 问题：prisma generate 在 Nixpacks 里 permission denied
+- 修复：改用 `npx prisma generate`
+
+### 3. NEXT_PUBLIC_ 环境变量
+- 问题：`NEXT_PUBLIC_` 前缀变量是 build time 注入，Railway 里设置后不会自动重新构建
+- 修复：创建 `apps/web/.env.production` 文件直接写入，push 后触发完整构建
+
+### 4. Clerk 配置
+- 问题：ClerkProvider 读不到 publishableKey 和 secretKey
+- 修复：publishableKey 和 secretKey 都写入 `.env.production`，确保 build time 和 runtime 都能读到
+
+### 5. Supabase 数据库连接
+- 问题：Direct connection 不支持 IPv4，Railway 是 IPv4 网络
+- 修复：使用 Session Pooler，端口 5432
+- 格式：`postgresql://postgres.[project-id]:[password]@aws-1-ap-south-1.pooler.supabase.com:5432/postgres`
+
+### 6. 端口配置
+- 问题：Railway Generate Domain 填错端口
+- 修复：Next.js 在 Railway 上默认跑 8080，不是 3000
+
+### 7. 构建方式
+- 当前使用 Nixpacks（`railway.json` builder: NIXPACKS）
+- buildCommand: `cd apps/web && npm ci && npx prisma generate && npx next build`
+- startCommand: `cd apps/web && npm run start`
+- Dockerfile 也保留在 `apps/web/Dockerfile`（node:20-slim 基础镜像），可切换
 
 ## 注意事项
 - Reddit 在当前网络环境无法访问（需代理）
