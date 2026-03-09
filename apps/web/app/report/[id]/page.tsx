@@ -18,6 +18,10 @@ interface Post {
   summaryZh?: string;
   painPoints?: string[];
   sentiment?: string;
+  starRating?: number;
+  verifiedPurchase?: boolean;
+  helpfulCount?: number;
+  hasImages?: boolean;
 }
 
 interface ReportData {
@@ -226,6 +230,36 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
+        {/* 星级分布 */}
+        {posts.some(p => p.starRating) && (() => {
+          const starCounts = [0, 0, 0, 0, 0];
+          posts.forEach(p => {
+            if (p.starRating && p.starRating >= 1 && p.starRating <= 5) {
+              starCounts[p.starRating - 1]++;
+            }
+          });
+          const maxCount = Math.max(...starCounts, 1);
+          return (
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/50">星级分布</p>
+              <div className="mt-3 space-y-2">
+                {[5, 4, 3, 2, 1].map(star => (
+                  <div key={star} className="flex items-center gap-3">
+                    <span className="w-12 text-right text-xs text-white/60">{star} 星</span>
+                    <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/5">
+                      <div
+                        className={`h-full rounded-full ${star >= 4 ? 'bg-green-400' : star === 3 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                        style={{ width: `${(starCounts[star - 1] / maxCount) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-xs text-white/50">{starCounts[star - 1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* 买家痛点 Top5 */}
         {top5.length > 0 && (
           <div className="mt-8">
@@ -277,6 +311,12 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                       <div className="mt-3 flex items-center gap-3">
                         <span className="text-xs text-white/40">
                           热度 {post.score} · {post.author}
+                          {post.verifiedPurchase && (
+                            <span className="ml-2 rounded bg-green-400/15 px-1.5 py-0.5 text-[10px] text-green-400">已验证购买</span>
+                          )}
+                          {(post.helpfulCount ?? 0) > 0 && (
+                            <span className="ml-2 text-white/30">{post.helpfulCount} 人觉得有用</span>
+                          )}
                         </span>
                         <a
                           href={post.url}
@@ -366,7 +406,11 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-white/50">
-                      {post.author} · {new Date(post.createdAt).toLocaleDateString('zh-CN')} ·{' '}
+                      {post.author}
+                      {post.verifiedPurchase && <span className="ml-1.5 rounded bg-green-400/15 px-1 py-0.5 text-[10px] text-green-400">已验证</span>}
+                      {(post.helpfulCount ?? 0) > 0 && <span className="ml-1.5 text-white/30">· {post.helpfulCount}人有用</span>}
+                      {post.hasImages && <span className="ml-1.5 text-white/30">· 含图片</span>}
+                      {' '}· {new Date(post.createdAt).toLocaleDateString('zh-CN')} ·{' '}
                       <a href={post.url} target="_blank" rel="noopener noreferrer" className="text-[#00C2FF]/70 hover:text-[#00C2FF]">
                         原文
                       </a>
