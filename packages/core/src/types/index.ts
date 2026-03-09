@@ -50,6 +50,16 @@ export interface Post {
   opportunities?: string[];
   /** 商业优先级 */
   priority?: 'high' | 'medium' | 'low';
+  /** Amazon 原始星级 1-5 */
+  starRating?: number;
+  /** 是否 Verified Purchase */
+  verifiedPurchase?: boolean;
+  /** "X 人觉得有用" 数量 */
+  helpfulCount?: number;
+  /** 是否含图片评论 */
+  hasImages?: boolean;
+  /** 商品名称（Amazon 特有） */
+  productTitle?: string;
 }
 
 // ── 分析相关类型 ──────────────────────────────────────────────────────
