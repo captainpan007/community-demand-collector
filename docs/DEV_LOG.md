@@ -1,5 +1,30 @@
 # 开发日志
 
+## 2026-03-09（续）
+
+### Amazon 采集架构升级
+- ✅ 新增 ScraperAPI HTTP 采集方法（`fetchWithScraperAPI()`），替代 Playwright 作为首选
+- ✅ 三层 fallback：ScraperAPI → Playwright（本地 auth）→ Mock（demoMode）
+- ✅ Web API route 简化：移除 amazon-auth.json 检查，collector 内部处理 fallback
+- ❌ ScraperAPI 免费版无法访问 Amazon（返回 404 Page Not Found，Amazon 封锁免费代理 IP）
+- 💡 架构已就位，日后接入付费版或其他服务只需设置 `SCRAPERAPI_KEY`
+
+### 新增评论字段
+- ✅ Post 类型新增：starRating / verifiedPurchase / helpfulCount / hasImages / productTitle
+- ✅ parseReviewsHtml 增加 hasImages 检测
+- ✅ parsePost 输出新增字段
+
+### 报告页增强
+- ✅ 星级分布柱状图（1-5 星，绿/黄/红配色）
+- ✅ 痛点卡片：Verified Purchase 标签 + "X 人觉得有用"
+- ✅ 评论列表：已验证 / helpful 数 / 含图片 标识
+
+### 数据库迁移
+- ✅ 从 Supabase（ap-south-1）迁移到 Railway 自带 PostgreSQL
+- 原因：跨区域（Railway us-west2 ↔ Supabase ap-south-1）Circuit breaker 持续打开
+- Internal URL: `postgres.railway.internal:5432/railway`
+- Schema 同步：本地 `DATABASE_URL="公网URL" npx prisma db push`
+
 ## 2026-03-09
 
 ### Railway 部署修复

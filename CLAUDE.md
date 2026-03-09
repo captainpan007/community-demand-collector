@@ -7,7 +7,7 @@
 - CLI: Node.js + TypeScript，入口 `dist/index.js`
 - Core 包: `packages/core/src/`（collectors/analyzers/reporters/translators）
 - Web: `apps/web/`，Next.js 16 + Clerk 认证 + Prisma + Supabase + Lemon Squeezy
-- 数据库: Supabase PostgreSQL，通过 Session Pooler 连接
+- 数据库: Railway PostgreSQL（原 Supabase 因跨区域延迟已弃用）
 
 ## 当前完成状态
 ✅ CLI 完整可用：`node dist/index.js collect -k "关键词" -s hackernews -l 10 -t -o report.md`
@@ -20,12 +20,14 @@
 ✅ Amazon URL 粘贴识别：输入框支持粘贴完整 Amazon URL，自动提取 ASIN 并显示绿色提示
 ✅ 报告显示商品名称：Amazon 采集时抓取 productTitle，报告页优先显示商品名，fallback 显示 ASIN
 ✅ Trustpilot 真实采集：Playwright 采集，过滤 1-2 星差评（?stars=1&stars=2），Web 端 mock:false
+✅ Amazon 采集三层 fallback：ScraperAPI → Playwright → Mock（ScraperAPI 免费版暂不可用，架构已就位）
+✅ 报告详情页增强：星级分布图 / Verified Purchase 标签 / helpful 数 / 图片评论标识
 
 ## 待完成
 - G2 采集器（未开始）
 
 ## 关键文件
-- `packages/core/src/collectors/amazon.js` - Amazon Playwright 采集器（含一次性登录流程）
+- `packages/core/src/collectors/amazon.js` - Amazon 采集器（ScraperAPI + Playwright + Mock 三层 fallback）
 - `packages/core/src/collectors/trustpilot.js` - Trustpilot Playwright 采集器（1-2星过滤）
 - `packages/core/src/index.js` - runCollect 主流程，含 LLM 翻译逻辑
 - `packages/core/src/reporters/markdown.js` - CLI 报告生成（含综合结论，分母已修复）
@@ -39,6 +41,7 @@
 - CLI: 根目录 `.env`
 - Web 本地: `apps/web/.env.local` 和 `apps/web/.env`
 - Web 生产: `apps/web/.env.production`（已 git add -f，含 Clerk keys + DATABASE_URL）
+- ScraperAPI: `SCRAPERAPI_KEY`（各 env 文件 + Railway 环境变量，免费版暂不可用于 Amazon）
 
 ## Railway 部署踩坑总结
 
@@ -58,12 +61,12 @@
 - 问题：ClerkProvider 读不到 publishableKey 和 secretKey
 - 修复：publishableKey 和 secretKey 都写入 `.env.production`，确保 build time 和 runtime 都能读到
 
-### 5. Supabase 数据库连接
+### 5. 数据库连接（已解决）
 - 问题：Railway（us-west2）连 Supabase（ap-south-1）跨区域，Circuit breaker open
-- 当前配置：Session Pooler 端口 5432 + `connection_limit=1&connect_timeout=30&pool_timeout=30`
-- `prisma.ts` 里显式传入 `datasources: { db: { url: process.env.DATABASE_URL } }`
-- 格式：`postgresql://postgres.[project-id]:[password]@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?connection_limit=1&connect_timeout=30&pool_timeout=30`
-- ⚠️ 跨区域连接不稳定，如持续失败考虑：迁移 Supabase 到 us-west / 用 Railway 自带 PostgreSQL
+- 解决：改用 Railway 自带 PostgreSQL，同网络零延迟
+- Internal URL：`postgresql://postgres:xxx@postgres.railway.internal:5432/railway`
+- Public URL（本地 prisma db push 用）：`postgresql://postgres:xxx@crossover.proxy.rlwy.net:58482/railway`
+- Schema 同步：本地执行 `DATABASE_URL="公网URL" npx prisma db push`
 
 ### 6. 端口配置
 - 问题：Railway Generate Domain 填错端口
