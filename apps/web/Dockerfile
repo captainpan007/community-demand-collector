@@ -1,4 +1,10 @@
-FROM mcr.microsoft.com/playwright:jammy
+FROM node:20-slim
+
+# Install dependencies needed by Playwright and Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
@@ -7,7 +13,6 @@ COPY . .
 RUN cd apps/web && npm ci
 
 # Prisma
-RUN chmod +x apps/web/node_modules/.bin/prisma || true
 RUN cd apps/web && npx prisma generate
 
 # Build Next.js (reads .env.production for NEXT_PUBLIC_ vars)
