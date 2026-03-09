@@ -59,9 +59,11 @@
 - 修复：publishableKey 和 secretKey 都写入 `.env.production`，确保 build time 和 runtime 都能读到
 
 ### 5. Supabase 数据库连接
-- 问题：Direct connection 不支持 IPv4，Railway 是 IPv4 网络
-- 修复：使用 Session Pooler，端口 5432
-- 格式：`postgresql://postgres.[project-id]:[password]@aws-1-ap-south-1.pooler.supabase.com:5432/postgres`
+- 问题：Railway（us-west2）连 Supabase（ap-south-1）跨区域，Circuit breaker open
+- 当前配置：Session Pooler 端口 5432 + `connection_limit=1&connect_timeout=30&pool_timeout=30`
+- `prisma.ts` 里显式传入 `datasources: { db: { url: process.env.DATABASE_URL } }`
+- 格式：`postgresql://postgres.[project-id]:[password]@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?connection_limit=1&connect_timeout=30&pool_timeout=30`
+- ⚠️ 跨区域连接不稳定，如持续失败考虑：迁移 Supabase 到 us-west / 用 Railway 自带 PostgreSQL
 
 ### 6. 端口配置
 - 问题：Railway Generate Domain 填错端口

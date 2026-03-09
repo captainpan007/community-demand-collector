@@ -7,14 +7,31 @@
 - ✅ 创建 `apps/web/.env.production`，写入 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`、`CLERK_SECRET_KEY`、`DATABASE_URL`
 - ✅ 文件被 `.gitignore` 的 `.env.*` 规则忽略，用 `git add -f` 强制跟踪
 - ✅ 修复 `middleware.ts` matcher 正则：`\\\\.` 双转义改为 `\\.`
-- ✅ 新增 `/api/health` 诊断端点，返回环境变量加载状态（不暴露值）
+- ✅ 新增 `/api/health` 诊断端点，返回环境变量 + 数据库连接状态（不暴露值）
 - ✅ `railway.json` 改回 Nixpacks，buildCommand 改为 `cd apps/web && npm ci && npx prisma generate && npx next build`
-- ✅ Health check 确认：Clerk keys 已加载，DATABASE_URL 需在 Railway Variables 或 `.env.production` 中设置
-- 踩坑记录：
-  - Playwright Docker 镜像（`mcr.microsoft.com/playwright:v1.52.0-jammy`）标签不存在，可用标签为 `jammy`/`noble`/`latest`
-  - Nixpacks 只在根目录执行 `npm install`，子目录 `apps/web` 依赖需要在 buildCommand 里显式 `npm ci`
-  - `NEXT_PUBLIC_` 变量必须 build time 存在，仅设 Railway 环境变量不够（runtime 才注入）
-  - Supabase Session Pooler 端口 5432（非 6543），Railway 是 IPv4 网络
+- ✅ Health check 确认：Clerk keys ✅、DATABASE_URL ✅
+- ✅ 首页已能正常加载（导航栏、Hero 区域、按钮）
+
+### 数据库连接修复（进行中）
+- ❌ 登录后访问 `/dashboard` 报 500：`Circuit breaker open: Unable to establish connection to upstream database`
+- 原因：Railway（us-west2 美国西部）连接 Supabase（ap-south-1 亚洲南部），跨区域延迟/连接不稳定
+- 尝试过的端口：
+  - 6543（Session Pooler + pgbouncer=true）→ Circuit breaker open
+  - 5432（Direct/Session Pooler）→ Circuit breaker open
+- 最新修复（commit `28d9b6f`，待验证）：
+  - `apps/web/.env.production` DATABASE_URL 改为端口 5432 + `connection_limit=1&connect_timeout=30&pool_timeout=30`
+  - `apps/web/lib/prisma.ts` 加 `datasources: { db: { url: process.env.DATABASE_URL } }` 显式传入
+- ⏳ **待回来检查**：访问 `/api/health` 看 `db.connected` 是否为 true
+- 💡 如果仍然连不上，可能需要：
+  1. 将 Supabase 项目迁移到 us-west 区域（与 Railway 同区）
+  2. 或在 Railway 上改用其他数据库（如 Railway 自带的 PostgreSQL）
+  3. 或在 Supabase Dashboard → Database → Network 里检查是否有 IP 限制
+
+### 踩坑记录
+- Playwright Docker 镜像（`mcr.microsoft.com/playwright:v1.52.0-jammy`）标签不存在，可用标签为 `jammy`/`noble`/`latest`
+- Nixpacks 只在根目录执行 `npm install`，子目录 `apps/web` 依赖需要在 buildCommand 里显式 `npm ci`
+- `NEXT_PUBLIC_` 变量必须 build time 存在，仅设 Railway 环境变量不够（runtime 才注入）
+- Supabase Session Pooler 的 Circuit breaker 会在连接失败后短路，需要等待重置
 
 ---
 
