@@ -5,7 +5,7 @@
     "buildCommand": "cd apps/web && npm ci && npx prisma generate && npx next build"
   },
   "deploy": {
-    "startCommand": "cd apps/web && npm run start",
+    "startCommand": "cd apps/web && npx prisma db push && npm run start",
     "restartPolicyType": "ON_FAILURE"
   }
 }
