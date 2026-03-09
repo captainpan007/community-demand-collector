@@ -457,70 +457,112 @@ class AmazonCollector extends base_1.BaseCollector {
         });
         try {
             const page = await context.newPage();
-            const url = `https://www.amazon.com/product-reviews/${asin}?sortBy=recent`;
-            this.log(`Playwright → ${url}`);
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-            const title = await page.title();
-            if (title.includes('Sign-In') || title.includes('Amazon Sign')) {
-                // auth state 已过期，删除后提示重新登录
-                try { fs.unlinkSync(AUTH_STATE_PATH); } catch {}
-                throw new types_1.CollectorError(
-                    'Amazon session expired. Deleted saved auth state — please run the command again to log in fresh.',
-                    this.platform
-                );
-            }
-            // 等待评论加载（超时前先截图供调试）
-            const DEBUG_SCREENSHOT = path.join(os.homedir(), '.demand-collector', 'debug.png');
-            await page.waitForSelector('[data-hook="review"]', { timeout: 15000 }).catch(async (err) => {
-                try { await page.screenshot({ path: DEBUG_SCREENSHOT, fullPage: true }); } catch {}
-                this.log(`Screenshot saved to ${DEBUG_SCREENSHOT}`);
-                throw new types_1.CollectorError(
-                    `No reviews found for ASIN ${asin}. Screenshot saved to ${DEBUG_SCREENSHOT}. The page may be showing a CAPTCHA or the structure changed.`,
-                    this.platform
-                );
-            });
-            // Extract product title from review page header
-            const productTitle = await page.evaluate(() => {
-                // Try selectors in order of reliability
-                const selectors = [
-                    '[data-hook="product-link"]',
-                    '#cm_cr-product_info [data-hook="product-link"]',
-                    '.cr-lightbox-title-link',
-                    '#product-title',
-                    '.product-title a',
-                    '.cr-product-title a',
-                    '[data-hook="cr-summarization-attributes-btn"]',
-                ];
-                for (const sel of selectors) {
-                    const el = document.querySelector(sel);
-                    const text = el?.textContent?.trim();
-                    if (text && text.length > 3 && text.length < 300) return text;
+            // Amazon's "limited selection" mode ignores filterByStar URL params for headless browsers.
+            // Strategy: fetch multiple pages of ALL reviews, then filter to critical (<=3 stars) client-side.
+            const allItems = [];
+            let productTitle = null;
+            const maxPages = Math.min(Math.ceil(limit / 8) + 2, 10); // Amazon shows ~8 reviews per page in limited mode, cap at 10 pages
+
+            for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                const url = `https://www.amazon.com/product-reviews/${asin}?sortBy=recent&pageNumber=${pageNum}`;
+                this.log(`Playwright page ${pageNum} → ${url}`);
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+                // First page: check auth and extract product title
+                if (pageNum === 1) {
+                    const title = await page.title();
+                    if (title.includes('Sign-In') || title.includes('Amazon Sign')) {
+                        try { fs.unlinkSync(AUTH_STATE_PATH); } catch {}
+                        throw new types_1.CollectorError(
+                            'Amazon session expired. Deleted saved auth state — please run the command again to log in fresh.',
+                            this.platform
+                        );
+                    }
+                    const DEBUG_SCREENSHOT = path.join(os.homedir(), '.demand-collector', 'debug.png');
+                    await page.waitForSelector('[data-hook="review"]', { timeout: 15000 }).catch(async (err) => {
+                        try { await page.screenshot({ path: DEBUG_SCREENSHOT, fullPage: true }); } catch {}
+                        this.log(`Screenshot saved to ${DEBUG_SCREENSHOT}`);
+                        throw new types_1.CollectorError(
+                            `No reviews found for ASIN ${asin}. Screenshot saved to ${DEBUG_SCREENSHOT}. The page may be showing a CAPTCHA or the structure changed.`,
+                            this.platform
+                        );
+                    });
+                    productTitle = await page.evaluate(() => {
+                        const selectors = [
+                            '[data-hook="product-link"]',
+                            '#cm_cr-product_info [data-hook="product-link"]',
+                            '.cr-lightbox-title-link',
+                            '#product-title',
+                            '.product-title a',
+                            '.cr-product-title a',
+                        ];
+                        for (const sel of selectors) {
+                            const el = document.querySelector(sel);
+                            const text = el?.textContent?.trim();
+                            if (text && text.length > 3 && text.length < 300) return text;
+                        }
+                        return null;
+                    }).catch(() => null);
+                    if (productTitle) this.log(`Product title: ${productTitle}`);
+                } else {
+                    // Subsequent pages: check if reviews exist
+                    const hasReviews = await page.$('[data-hook="review"]');
+                    if (!hasReviews) {
+                        this.log(`Page ${pageNum}: no reviews, stopping pagination`);
+                        break;
+                    }
                 }
-                return null;
-            }).catch(() => null);
-            if (productTitle) this.log(`Product title: ${productTitle}`);
-            const items = await page.evaluate(() => {
-                return Array.from(document.querySelectorAll('[data-hook="review"]')).map(el => ({
-                    id: el.id || `amz-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-                    title: el.querySelector('[data-hook="review-title"] span:not([class])')?.textContent?.trim()
-                        ?? el.querySelector('[data-hook="review-title"]')?.textContent?.trim()
-                        ?? '(no title)',
-                    text: el.querySelector('[data-hook="review-body"] span')?.textContent?.trim() ?? '',
-                    stars: parseFloat(
-                        el.querySelector('[data-hook="review-star-rating"] .a-icon-alt')?.textContent ?? '3'
-                    ),
-                    author: el.querySelector('.a-profile-name')?.textContent?.trim() ?? 'unknown',
-                    dateText: el.querySelector('[data-hook="review-date"]')?.textContent?.trim() ?? '',
-                    helpfulText: el.querySelector('[data-hook="helpful-vote-statement"]')?.textContent?.trim() ?? '',
-                    verified: el.querySelector('[data-hook="avp-badge"]') !== null,
-                    hasImages: el.querySelector('[data-hook="review-image-tile"]') !== null
-                        || el.querySelector('.review-image-tile-section') !== null,
-                }));
-            });
-            // 更新 auth state（保持 cookies 刷新）
+
+                const pageItems = await page.evaluate(() => {
+                    return Array.from(document.querySelectorAll('[data-hook="review"]')).map(el => ({
+                        id: el.id || `amz-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                        title: el.querySelector('[data-hook="review-title"] span:not([class])')?.textContent?.trim()
+                            ?? el.querySelector('[data-hook="review-title"]')?.textContent?.trim()
+                            ?? '(no title)',
+                        text: el.querySelector('[data-hook="review-body"] span')?.textContent?.trim() ?? '',
+                        stars: parseFloat(
+                            el.querySelector('[data-hook="review-star-rating"] .a-icon-alt')?.textContent ?? '3'
+                        ),
+                        author: el.querySelector('.a-profile-name')?.textContent?.trim() ?? 'unknown',
+                        dateText: el.querySelector('[data-hook="review-date"]')?.textContent?.trim() ?? '',
+                        helpfulText: el.querySelector('[data-hook="helpful-vote-statement"]')?.textContent?.trim() ?? '',
+                        verified: el.querySelector('[data-hook="avp-badge"]') !== null,
+                        hasImages: el.querySelector('[data-hook="review-image-tile"]') !== null
+                            || el.querySelector('.review-image-tile-section') !== null,
+                    }));
+                });
+
+                this.log(`Page ${pageNum}: parsed ${pageItems.length} reviews`);
+                if (pageItems.length === 0) break;
+
+                // Deduplicate by review ID
+                const existingIds = new Set(allItems.map(i => i.id));
+                const newItems = pageItems.filter(i => !existingIds.has(i.id));
+                allItems.push(...newItems);
+
+                if (newItems.length === 0) {
+                    this.log(`Page ${pageNum}: all duplicates, stopping pagination`);
+                    break;
+                }
+
+                // Polite delay between pages
+                if (pageNum < maxPages) {
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+            }
+
+            // Update auth state
             await context.storageState({ path: AUTH_STATE_PATH });
-            this.log(`Playwright: parsed ${items.length} reviews`);
-            return items.slice(0, limit).map(raw => {
+            this.log(`Playwright total: ${allItems.length} reviews collected across pages`);
+
+            // Client-side filtering: prioritize critical reviews (1-3 stars)
+            const criticalItems = allItems.filter(r => r.stars <= 3);
+            const nonCriticalItems = allItems.filter(r => r.stars > 3);
+            this.log(`Critical (1-3 stars): ${criticalItems.length}, Non-critical (4-5 stars): ${nonCriticalItems.length}`);
+
+            // Return critical reviews first, pad with non-critical if not enough
+            const sorted = [...criticalItems, ...nonCriticalItems];
+            return sorted.slice(0, limit).map(raw => {
                 const dateMatch = raw.dateText?.match(/(\w+ \d+, \d{4})/);
                 const createdAt = dateMatch ? new Date(dateMatch[1]).toISOString() : new Date().toISOString();
                 const helpfulMatch = raw.helpfulText?.match(/(\d+)/);
