@@ -3,11 +3,6 @@ import { auth } from '@clerk/nextjs/server';
 import { getCurrentUser, canRunCollect } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { runCollect, buildWordCloudChart, buildTrendChart } from '@demand-collector/core';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
-
-const AMAZON_AUTH_PATH = join(homedir(), '.demand-collector', 'amazon-auth.json');
 
 async function translateMissingTitles(
   topDemands: Array<Record<string, unknown>>
@@ -110,19 +105,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    // amazon: 有 auth 文件走真实采集，否则 fallback mock
-    // trustpilot: 走真实 Playwright 采集
-    // 其他: mock
-    const amazonAuthMissing = source === 'amazon' && !existsSync(AMAZON_AUTH_PATH);
     const isValidAsin = (s: string) => /^[A-Z0-9]{10}$/.test(s.trim().toUpperCase());
     const keywordIsAsin = source === 'amazon' && isValidAsin(keyword);
+    // Amazon: only mock if not a valid ASIN (collector handles ScraperAPI/Playwright/mock fallback internally)
+    // Trustpilot: real Playwright scraping
+    // Others: mock for now
     const mock =
-      source === 'amazon' ? (amazonAuthMissing || !keywordIsAsin) :
+      source === 'amazon' ? !keywordIsAsin :
       source === 'trustpilot' ? false :
       source === 'tiktokshop' ? true :
       source === 'shopee' ? true :
       true;
-    console.log(`[collect] source=${source} mock=${mock} amazonAuthMissing=${amazonAuthMissing} authPath=${AMAZON_AUTH_PATH}`);
+    console.log(`[collect] source=${source} mock=${mock}`);
     const result = await runCollect({
       keyword,
       source: source as 'reddit' | 'hackernews' | 'trustpilot' | 'amazon' | 'tiktokshop' | 'shopee',
@@ -130,7 +124,8 @@ export async function POST(req: Request) {
       limit,
       mock,
     });
-    if (amazonAuthMissing) {
+    // demoMode is now set by the collector itself via _demoMode flag on mock data
+    if ((result as unknown as Record<string, unknown>)._demoMode) {
       (result as unknown as Record<string, unknown>).demoMode = true;
     }
 
