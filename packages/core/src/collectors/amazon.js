@@ -324,7 +324,7 @@ class AmazonCollector extends base_1.BaseCollector {
 
             // Extract product title from first page
             if (pageNum === 1) {
-                const $ = cheerio_1.default.load(html);
+                const $ = cheerio_1.load(html);
                 const productTitle = $('[data-hook="product-link"]').first().text().trim()
                     || $('[data-hook="cr-product-title"]').text().trim()
                     || null;
@@ -587,7 +587,7 @@ class AmazonCollector extends base_1.BaseCollector {
         }
     }
     parseReviewsHtml(html) {
-        const $ = cheerio_1.default.load(html);
+        const $ = cheerio_1.load(html);
         const items = [];
         $('[data-hook="review"]').each((_, el) => {
             const $el = $(el);
