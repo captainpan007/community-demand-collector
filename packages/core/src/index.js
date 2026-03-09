@@ -16,8 +16,6 @@ const reddit_1 = require("./collectors/reddit");
 const hackernews_1 = require("./collectors/hackernews");
 const trustpilot_1 = require("./collectors/trustpilot");
 const amazon_1 = require("./collectors/amazon");
-const tiktokshop_1 = require("./collectors/tiktokshop");
-const shopee_1 = require("./collectors/shopee");
 const keyword_counter_1 = require("./analyzers/keyword-counter");
 const demand_ranker_1 = require("./analyzers/demand-ranker");
 const markdown_1 = require("./reporters/markdown");
@@ -44,12 +42,6 @@ function buildCollector(config) {
     }
     if (config.source === 'amazon') {
         return new amazon_1.AmazonCollector(config);
-    }
-    if (config.source === 'tiktokshop') {
-        return new tiktokshop_1.TikTokShopCollector(config);
-    }
-    if (config.source === 'shopee') {
-        return new shopee_1.ShopeeCollector(config);
     }
     return new reddit_1.RedditCollector(config);
 }
@@ -93,6 +85,9 @@ async function runCollect(override) {
         analysis,
         generatedAt: new Date(),
     };
+    if (collector._demoMode) {
+        report.demoMode = true;
+    }
     return report;
 }
 async function runBatch(keywords, override) {
@@ -129,8 +124,8 @@ async function runBatch(keywords, override) {
 }
 async function runReport(inputJsonPath, outputPath, format = 'md') {
     const appCfg = (0, config_1.getConfig)();
-    const data = (0, storage_1.loadReportData)(inputJsonPath);
-    const history = (0, storage_1.loadHistoryReports)(appCfg.storage.historyDir);
+    const data = await (0, storage_1.loadReportData)(inputJsonPath);
+    const history = await (0, storage_1.loadHistoryReports)(appCfg.storage.historyDir);
     const wordCloudUrl = await (0, quickchart_1.buildWordCloudChart)(data.analysis.keywords, appCfg);
     const trendUrl = await (0, quickchart_1.buildTrendChart)(history, appCfg);
     data.charts = {
@@ -183,11 +178,11 @@ function stopScheduler() {
 function buildWordCloudChart(keywords, config) {
     const appCfg = config ?? (0, config_1.getConfig)();
     const map = keywords instanceof Map ? keywords : new Map(Object.entries(keywords));
-    return (0, quickchart_1.buildWordCloudChart)(map, appCfg);
+    return (0, quickchart_1.buildWordCloudChart)(map, appCfg) || null;
 }
 function buildTrendChart(historyReports, config) {
     const appCfg = config ?? (0, config_1.getConfig)();
-    return (0, quickchart_1.buildTrendChart)(historyReports, appCfg);
+    return (0, quickchart_1.buildTrendChart)(historyReports, appCfg) || null;
 }
 async function loadHistoryReports(historyDir) {
     return (0, storage_1.loadHistoryReports)(historyDir);

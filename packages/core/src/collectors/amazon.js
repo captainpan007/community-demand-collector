@@ -37,6 +37,8 @@ class AmazonCollector extends base_1.BaseCollector {
     constructor() {
         super(...arguments);
         this.platform = "amazon";
+        this._demoMode = false;
+        this._productTitle = null;
         // Playwright 采集不需要重试（auth 问题重试无意义，网络问题也不是幂等）
         this.maxRetries = 1;
     }
@@ -302,7 +304,7 @@ class AmazonCollector extends base_1.BaseCollector {
         const maxPages = Math.ceil(limit / 10); // Amazon shows ~10 reviews per page
 
         while (reviews.length < limit && pageNum <= maxPages) {
-            const amazonUrl = `https://www.amazon.com/product-reviews/${asin}?filterByStar=one_star&filterByStar=two_star&sortBy=recent&pageNumber=${pageNum}`;
+            const amazonUrl = `https://www.amazon.com/product-reviews/${asin}?filterByStar=critical&sortBy=recent&pageNumber=${pageNum}`;
             const scraperUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(amazonUrl)}&render=false`;
 
             this.log(`ScraperAPI page ${pageNum}: ${amazonUrl}`);
@@ -384,6 +386,8 @@ class AmazonCollector extends base_1.BaseCollector {
             if (fs.existsSync(AUTH_STATE_PATH)) {
                 this.log('Trying Playwright with saved auth...');
                 return await this.fetchWithPlaywright();
+            } else {
+                this.log('No Playwright auth file found, skipping Tier 2');
             }
         } catch (err) {
             this.log(`Playwright failed: ${err.message}, falling back to mock...`);
@@ -391,9 +395,8 @@ class AmazonCollector extends base_1.BaseCollector {
 
         // Tier 3: Mock with demoMode flag
         this.log('All real collection methods unavailable, returning mock data');
-        const mockData = this.fetchMock();
-        mockData._demoMode = true;
-        return mockData;
+        this._demoMode = true;
+        return this.fetchMock();
     }
     async fetchWithPlaywright() {
         const { chromium } = require('playwright');
@@ -510,6 +513,8 @@ class AmazonCollector extends base_1.BaseCollector {
                     dateText: el.querySelector('[data-hook="review-date"]')?.textContent?.trim() ?? '',
                     helpfulText: el.querySelector('[data-hook="helpful-vote-statement"]')?.textContent?.trim() ?? '',
                     verified: el.querySelector('[data-hook="avp-badge"]') !== null,
+                    hasImages: el.querySelector('[data-hook="review-image-tile"]') !== null
+                        || el.querySelector('.review-image-tile-section') !== null,
                 }));
             });
             // 更新 auth state（保持 cookies 刷新）
@@ -529,6 +534,7 @@ class AmazonCollector extends base_1.BaseCollector {
                     createdAt,
                     helpfulVotes,
                     verified: raw.verified,
+                    hasImages: raw.hasImages ?? false,
                     asin,
                     productTitle: productTitle || null,
                     url: `https://www.amazon.com/gp/customer-reviews/${raw.id}`,

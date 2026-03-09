@@ -124,10 +124,8 @@ export async function POST(req: Request) {
       limit,
       mock,
     });
-    // demoMode is now set by the collector itself via _demoMode flag on mock data
-    if ((result as unknown as Record<string, unknown>)._demoMode) {
-      (result as unknown as Record<string, unknown>).demoMode = true;
-    }
+    // demoMode is propagated by runCollect from collector._demoMode
+    // No additional check needed here - result.demoMode is set directly by runCollect
 
     // 翻译缺少中文标题的评论
     try {
